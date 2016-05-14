@@ -30,4 +30,4 @@
 # Vim swp
 *.swp
 
-models-textures
+/models-textures/*
