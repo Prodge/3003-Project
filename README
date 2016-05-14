@@ -1,0 +1,66 @@
+Please see the README file in the ../MAC_VERSIONS subdirectory for more
+detail. Compared to the files in the ../MAC_VERSIONS subdirectory, the
+differences for the code in this directory are:
+
+libassimp.so.3.1.1 - assimp was compiled as a shared library (or shared
+	object). The setup-once file is therefore different.
+
+Makefile - this file has to be different, of course.
+
+vStart.glsl and fStart.glsl - to get the scene-start program to work
+	in the lab PCs (for Linux), the two shader files have to be
+	the same as those for the Mac.
+
+setup - instead of setting up the environment variable DYLD_LIBRARY_PATH,
+	we set up the environment variable LD_LIBRARY_PATH instead.
+	You might not need to set up this environment variable though.
+
+setup-once - similar to the setup-once in the ../MAC_VERSIONS subdirectory.
+	However, since in the system directory /usr/lib64, there is
+	no file with the name libGLEW.so, I have added a command to
+	create a symbolic link to this shared library.
+
+scene-start.cpp - in the main function, you may need to experiment a
+	little bit to see if you need to have the following lines:
+
+		glutInitContextVersion( 3, 2);
+		glutInitContextProfile( GLUT_CORE_PROFILE );
+
+	commented out. On the Mac, these lines are not needed. On
+	Linux, they might be needed.
+	- On my desktop:
+	    Fedora, GLX version 1.4, 
+            OpenGL vendor string: NVIDIA Corporation, 
+	    OpenGL version string: 4.5.0 NVIDIA 346.46
+	    OpenGL shading language version string: 4.50 NVIDIA
+          the first line must be commented (i.e., not used). In fact,
+	  both lines can be commented without causing any problems to
+	  the program. If both lines are used in the code, the program
+	  would still compile and run but the menu items would be black out.
+	- On my laptop:
+	    Fedora, server glx vendor string: SGI
+	    server glx version string: 1.4
+	    client glx vendor string: Mesa Project and SGI
+	    client glx version string: 1.4
+	    OpenGL core profile version string: 3.3 (Core Profile) Mesa 10.3.3
+	    OpenGL core profile shading language version string: 3.30
+	  those two lines must be there otherwise the program simply crashed.
+	  However, the menu items appeared to be invisible. If you encounter
+	  the same problem, I suggest you not to waste your time on fixing
+	  the problem. Please use the lab PCs (Mac or Linux) to work on
+	  the project.
+
+	On the lab PCs that run Linux, the two lines above must be commented.
+
+	The above problem seems to occur only if you use the shaders
+	provided in the glsl subdirectory.  I therefore suggest that
+	you use the vStart.glsl and fStart.glsl in the current directory
+	(rather than in the glsl subdirectory).
+
+	If you follow the instruction given above (set up symbolic links
+	and environment variable (probably not needed)) then you should
+	be able to compile and run the skeleton program scene-start.
+
+
+Du Huynh
+April 2016

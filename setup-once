@@ -1,0 +1,16 @@
+#!/bin/csh
+#
+#This C-shell script helps you set up the symbolic links to the shared library
+#(or shared object) file for assimp. You only need to run this script once.
+#The actual assimp library file is libassimp.so.3.1.1. This is a very large
+#file. The other two .so files should just be symbolic links pointing to this
+#file. These symbolic links are just small files in the directory. Once the
+#symbolic links have been created, they stay in the directory permanently.
+#
+#Du Huynh
+#April 2016.
+
+ln -s libassimp.so.3.1.1 libassimp.so.3 
+ln -s libassimp.so.3 libassimp.so 
+
+ln -s /usr/lib64/libGLEW.so.1.10 libGLEW.so
