@@ -505,12 +505,12 @@ static void materialMenu(int id)
 static void adjustAngleYX(vec2 angle_yx)
 {
     sceneObjs[currObject].angles[1]+=angle_yx[0];
-    sceneObjs[currObject].angles[0]+=angle_yx[1];
+    sceneObjs[currObject].angles[0]-=angle_yx[1];
 }
 
 static void adjustAngleZTexscale(vec2 az_ts)
 {
-    sceneObjs[currObject].angles[2]+=az_ts[0];
+    sceneObjs[currObject].angles[2]-=az_ts[0];
     sceneObjs[currObject].texScale+=az_ts[1];
 }
 
