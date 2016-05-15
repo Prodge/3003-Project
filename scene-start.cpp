@@ -445,6 +445,18 @@ static void adjustBlueBrightness(vec2 bl_br)
     sceneObjs[toolObj].brightness+=bl_br[1];
 }
 
+static void adjustAmbientDiffuse(vec2 ad)
+{
+    sceneObjs[toolObj].ambient+=ad[0];
+    sceneObjs[toolObj].diffuse+=ad[1];
+}
+
+static void adjustSpecularShine(vec2 ss) 
+{
+    sceneObjs[toolObj].specular+=ss[0];
+    sceneObjs[toolObj].shine+=ss[1];
+}
+
 static void lightMenu(int id)
 {
     deactivateTool();
@@ -495,9 +507,11 @@ static void materialMenu(int id)
         toolObj = currObject;
         setToolCallbacks(adjustRedGreen, mat2(1, 0, 0, 1),
                          adjustBlueBrightness, mat2(1, 0, 0, 1) );
-    }
-    // You'll need to fill in the remaining menu items here.
-    else {
+    }else if (id==20) {
+        toolObj = currObject;
+        setToolCallbacks(adjustAmbientDiffuse, mat2(1, 0, 0, 1),
+                         adjustSpecularShine, mat2(1, 0, 0, 1) );
+    }else {
         printf("Error in materialMenu\n");
     }
 }
@@ -537,7 +551,7 @@ static void makeMenu()
 
     int materialMenuId = glutCreateMenu(materialMenu);
     glutAddMenuEntry("R/G/B/All",10);
-    glutAddMenuEntry("UNIMPLEMENTED: Ambient/Diffuse/Specular/Shine",20);
+    glutAddMenuEntry("Ambient/Diffuse/Specular/Shine",20);
 
     int texMenuId = createArrayMenu(numTextures, textureMenuEntries, texMenu);
     int groundMenuId = createArrayMenu(numTextures, textureMenuEntries, groundMenu);
