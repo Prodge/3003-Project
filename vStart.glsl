@@ -19,7 +19,7 @@ void main()
     vec3 pos = (ModelView * vpos).xyz;
 
 
-    // The vector to the light from the vertex    
+    // The vector to the light from the vertex
     vec3 Lvec = LightPosition.xyz - pos;
 
     // Unit direction vectors for Blinn-Phong shading calculation
@@ -39,14 +39,23 @@ void main()
 
     float Ks = pow( max(dot(N, H), 0.0), Shininess );
     vec3  specular = Ks * SpecularProduct;
-    
+
     if (dot(L, N) < 0.0 ) {
 	specular = vec3(0.0, 0.0, 0.0);
-    } 
+    }
+
+    // lightDistanceMultiplier gets closer to maxLightDistanceMultiplier as the light gets closer
+    // lightDistanceMultiplier gets smaller as the light gets further away (averageDistanceToLight increases)
+    // Falloff changes the rate at which this occurs by modifying the averageDistanceToLight by a constant factor
+    float falloff = 10.0;
+    float minDistance = 0.5;
+    float averageDistanceToLight = abs(Lvec.x) + abs(Lvec.y) + abs(Lvec.z) + minDistance;
+    float maxLightDistanceMultiplier = 1.0;
+    float lightDistanceMultiplier = maxLightDistanceMultiplier/(averageDistanceToLight/falloff);
 
     // globalAmbient is independent of distance from the light source
     vec3 globalAmbient = vec3(0.1, 0.1, 0.1);
-    color.rgb = globalAmbient  + ambient + diffuse + specular;
+    color.rgb = (globalAmbient + ambient + diffuse + specular) * lightDistanceMultiplier;
     color.a = 1.0;
 
     gl_Position = Projection * ModelView * vpos;
