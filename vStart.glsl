@@ -48,7 +48,8 @@ void main()
     // lightDistanceMultiplier gets smaller as the light gets further away (averageDistanceToLight increases)
     // Falloff changes the rate at which this occurs by modifying the averageDistanceToLight by a constant factor
     float falloff = 10.0;
-    float averageDistanceToLight = abs(Lvec.x) + abs(Lvec.y) + abs(Lvec.z) + .01;
+    float minDistance = 0.5;
+    float averageDistanceToLight = abs(Lvec.x) + abs(Lvec.y) + abs(Lvec.z) + minDistance;
     float maxLightDistanceMultiplier = 1.0;
     float lightDistanceMultiplier = maxLightDistanceMultiplier/(averageDistanceToLight/falloff);
 
