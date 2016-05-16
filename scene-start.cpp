@@ -306,6 +306,12 @@ void init( void )
     sceneObjs[1].texId = 0; // Plain texture
     sceneObjs[1].brightness = 0.2; // The light's brightness is 5 times this (below).
 
+    addObject(55); // Sphere for the first light
+    sceneObjs[2].loc = vec4(-2.0, 2.0, -2.0, 1.0);
+    sceneObjs[2].scale = 0.2;
+    sceneObjs[2].texId = 0; // Plain texture
+    sceneObjs[2].brightness = 0.2; // The light's brightness is 5 times this (below).
+
     addObject(rand() % numMeshes); // A test mesh
 
     // We need to enable the depth test to discard fragments that
@@ -372,19 +378,25 @@ void display( void )
     // Set the view matrix. To start with this just moves the camera
     // backwards.  You'll need to add appropriate rotations.
 
-    view = Translate(0.0, 0.0, -viewDist) * RotateX(camRotUpAndOverDeg) * RotateY(camRotSidewaysDeg);
+    mat4 rot = RotateX(camRotUpAndOverDeg) * RotateY(camRotSidewaysDeg);
+    view = Translate(0.0, 0.0, -viewDist) * rot;
 
     SceneObject lightObj1 = sceneObjs[1];
-    vec4 lightPosition = view * lightObj1.loc ;
+    vec4 light1Position = view * lightObj1.loc ;
+    SceneObject lightObj2 = sceneObjs[2];
+    vec4 light2Position = rot * lightObj2.loc ;
 
-    glUniform4fv( glGetUniformLocation(shaderProgram, "LightPosition"),
-                  1, lightPosition);
+    glUniform4fv( glGetUniformLocation(shaderProgram, "Light1Position"), 1, light1Position);
     CheckError();
+    glUniform4fv( glGetUniformLocation(shaderProgram, "Light2Position"), 1, light2Position);
+    CheckError();
+    glUniform3fv( glGetUniformLocation(shaderProgram, "Light1rgbBright"), 1, lightObj1.rgb * lightObj1.brightness );
+    glUniform3fv( glGetUniformLocation(shaderProgram, "Light2rgbBright"), 1, lightObj2.rgb * lightObj2.brightness ); 
 
     for (int i=0; i < nObjects; i++) {
         SceneObject so = sceneObjs[i];
 
-        vec3 rgb = so.rgb * lightObj1.rgb * so.brightness * lightObj1.brightness * 2.0;
+        vec3 rgb = so.rgb * so.brightness * 2.0;
         glUniform3fv( glGetUniformLocation(shaderProgram, "AmbientProduct"), 1, so.ambient * rgb );
         CheckError();
         glUniform3fv( glGetUniformLocation(shaderProgram, "DiffuseProduct"), 1, so.diffuse * rgb );
@@ -465,6 +477,17 @@ static void lightMenu(int id)
     }
     else if (id >= 71 && id <= 74) {
         toolObj = 1;
+        setToolCallbacks(adjustRedGreen, mat2(1.0, 0, 0, 1.0),
+                         adjustBlueBrightness, mat2(1.0, 0, 0, 1.0) );
+    }
+    else if (id == 80) {
+        toolObj = 2;
+        setToolCallbacks(adjustLocXZ, camRotZ(),
+                         adjustBrightnessY, mat2( 1.0, 0.0, 0.0, 10.0) );
+
+    }
+    else if (id >= 81 && id <= 84) {
+        toolObj = 2;
         setToolCallbacks(adjustRedGreen, mat2(1.0, 0, 0, 1.0),
                          adjustBlueBrightness, mat2(1.0, 0, 0, 1.0) );
     }
