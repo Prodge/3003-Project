@@ -341,7 +341,6 @@ void drawMesh(SceneObject sceneObj)
 
     mat4 model =
                     Translate(sceneObj.loc) *
-                    RotateX(sceneObj.angles[0]) *
                     RotateX(sceneObj.angles[0]) * // Having a duplicate call to rotateX or no call at all seems to be the only way to get the background to render??
                     RotateY(sceneObj.angles[1]) *
                     RotateZ(sceneObj.angles[2]) *
@@ -451,7 +450,7 @@ static void adjustAmbientDiffuse(vec2 ad)
     sceneObjs[toolObj].diffuse+=ad[1];
 }
 
-static void adjustSpecularShine(vec2 ss) 
+static void adjustSpecularShine(vec2 ss)
 {
     sceneObjs[toolObj].specular+=ss[0];
     sceneObjs[toolObj].shine+=ss[1];
