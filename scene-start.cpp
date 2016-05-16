@@ -533,6 +533,14 @@ static void deleteObject()
     }
 }
 
+static void duplicateObject(){
+    if (nObjects > 2){
+        sceneObjs[nObjects] = sceneObjs[nObjects-1];
+        currObject++;
+        nObjects++;
+    }
+}
+
 static void mainmenu(int id)
 {
     deactivateTool();
@@ -549,6 +557,8 @@ static void mainmenu(int id)
     }
     if (id == 60)
         deleteObject();
+    if (id == 65)
+        duplicateObject();
     if (id == 99) exit(0);
 }
 
@@ -571,6 +581,7 @@ static void makeMenu()
 
     glutCreateMenu(mainmenu);
     glutAddMenuEntry("Rotate/Move Camera",50);
+    glutAddMenuEntry("Duplicate object", 65);
     glutAddMenuEntry("Delete object", 60);
     glutAddSubMenu("Add object", objectId);
     glutAddMenuEntry("Position/Scale", 41);
