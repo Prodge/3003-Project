@@ -341,12 +341,10 @@ void drawMesh(SceneObject sceneObj)
 
     mat4 model =
                     Translate(sceneObj.loc) *
-                    RotateX(sceneObj.angles[0]) * // Having a duplicate call to rotateX or no call at all seems to be the only way to get the background to render??
+                    RotateX(sceneObj.angles[0]) *
                     RotateY(sceneObj.angles[1]) *
                     RotateZ(sceneObj.angles[2]) *
                     Scale(sceneObj.scale);
-    //mat4 model = Translate(sceneObj.loc) * Scale(sceneObj.scale);
-
 
     // Set the model-view matrix for the shaders
     glUniformMatrix4fv( modelViewU, 1, GL_TRUE, view * model );
@@ -527,6 +525,31 @@ static void adjustAngleZTexscale(vec2 az_ts)
     sceneObjs[currObject].texScale+=az_ts[1];
 }
 
+static void deleteObject()
+{
+    if (nObjects > 2){
+        currObject--;
+        nObjects--;
+    }
+}
+
+static void duplicateObject(){
+    if (nObjects > 2){
+        sceneObjs[nObjects] = sceneObjs[nObjects-1];
+        currObject++;
+        nObjects++;
+    }
+}
+
+static void selectObjectMenu(int id){
+    if (id == 0 && currObject > 2){
+        currObject--;
+    }
+    if (id == 1 && currObject < nObjects-1){
+        currObject++;
+    }
+}
+
 static void mainmenu(int id)
 {
     deactivateTool();
@@ -541,12 +564,20 @@ static void mainmenu(int id)
         setToolCallbacks(adjustAngleYX, mat2(400, 0, 0, -400),
                          adjustAngleZTexscale, mat2(400, 0, 0, 15) );
     }
+    if (id == 60)
+        deleteObject();
+    if (id == 65)
+        duplicateObject();
     if (id == 99) exit(0);
 }
 
 static void makeMenu()
 {
     int objectId = createArrayMenu(numMeshes, objectMenuEntries, objectMenu);
+
+    int selectObjectMenuId = glutCreateMenu(selectObjectMenu);
+    glutAddMenuEntry("Previous object",0);
+    glutAddMenuEntry("Next object",1);
 
     int materialMenuId = glutCreateMenu(materialMenu);
     glutAddMenuEntry("R/G/B/All",10);
@@ -563,7 +594,10 @@ static void makeMenu()
 
     glutCreateMenu(mainmenu);
     glutAddMenuEntry("Rotate/Move Camera",50);
+    glutAddMenuEntry("Duplicate object", 65);
+    glutAddMenuEntry("Delete object", 60);
     glutAddSubMenu("Add object", objectId);
+    glutAddSubMenu("Change object", selectObjectMenuId);
     glutAddMenuEntry("Position/Scale", 41);
     glutAddMenuEntry("Rotation/Texture Scale", 55);
     glutAddSubMenu("Material", materialMenuId);
