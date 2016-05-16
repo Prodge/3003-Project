@@ -50,12 +50,12 @@ void main()
     float falloff = 10.0;
     float minDistance = 0.5;
     float averageDistanceToLight = abs(Lvec.x) + abs(Lvec.y) + abs(Lvec.z) + minDistance;
-    float maxLightDistanceMultiplier = 1.0;
+    float maxLightDistanceMultiplier = 0.8;
     float lightDistanceMultiplier = maxLightDistanceMultiplier/(averageDistanceToLight/falloff);
 
     // globalAmbient is independent of distance from the light source
     vec3 globalAmbient = vec3(0.1, 0.1, 0.1);
-    color.rgb = (globalAmbient + ambient + diffuse + specular) * lightDistanceMultiplier;
+    color.rgb = globalAmbient + (ambient + diffuse + specular) * lightDistanceMultiplier;
     color.a = 1.0;
 
     gl_Position = Projection * ModelView * vpos;
