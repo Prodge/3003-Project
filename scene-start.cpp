@@ -339,15 +339,9 @@ void drawMesh(SceneObject sceneObj)
     // Set the model matrix - this should combine translation, rotation and scaling based on what's
     // in the sceneObj structure (see near the top of the program).
 
-    mat4 model =
-                    Translate(sceneObj.loc) *
-                    RotateX(sceneObj.angles[0]) *
-                    RotateX(sceneObj.angles[0]) * // Having a duplicate call to rotateX or no call at all seems to be the only way to get the background to render??
-                    RotateY(sceneObj.angles[1]) *
-                    RotateZ(sceneObj.angles[2]) *
-                    Scale(sceneObj.scale);
-    //mat4 model = Translate(sceneObj.loc) * Scale(sceneObj.scale);
-
+    mat4 model = Translate(sceneObj.loc) *
+                 (RotateZ(sceneObj.angles[2]) * RotateY(sceneObj.angles[1]) * RotateX(sceneObj.angles[0])) *
+                 Scale(sceneObj.scale);
 
     // Set the model-view matrix for the shaders
     glUniformMatrix4fv( modelViewU, 1, GL_TRUE, view * model );
@@ -519,12 +513,12 @@ static void materialMenu(int id)
 static void adjustAngleYX(vec2 angle_yx)
 {
     sceneObjs[currObject].angles[1]+=angle_yx[0];
-    sceneObjs[currObject].angles[0]-=angle_yx[1];
+    sceneObjs[currObject].angles[0]+=angle_yx[1];
 }
 
 static void adjustAngleZTexscale(vec2 az_ts)
 {
-    sceneObjs[currObject].angles[2]-=az_ts[0];
+    sceneObjs[currObject].angles[2]+=az_ts[0];
     sceneObjs[currObject].texScale+=az_ts[1];
 }
 
