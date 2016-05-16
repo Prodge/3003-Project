@@ -541,6 +541,15 @@ static void duplicateObject(){
     }
 }
 
+static void selectObjectMenu(int id){
+    if (id == 0 && currObject > 2){
+        currObject--;
+    }
+    if (id == 1 && currObject < nObjects-1){
+        currObject++;
+    }
+}
+
 static void mainmenu(int id)
 {
     deactivateTool();
@@ -566,6 +575,10 @@ static void makeMenu()
 {
     int objectId = createArrayMenu(numMeshes, objectMenuEntries, objectMenu);
 
+    int selectObjectMenuId = glutCreateMenu(selectObjectMenu);
+    glutAddMenuEntry("Previous object",0);
+    glutAddMenuEntry("Next object",1);
+
     int materialMenuId = glutCreateMenu(materialMenu);
     glutAddMenuEntry("R/G/B/All",10);
     glutAddMenuEntry("Ambient/Diffuse/Specular/Shine",20);
@@ -584,6 +597,7 @@ static void makeMenu()
     glutAddMenuEntry("Duplicate object", 65);
     glutAddMenuEntry("Delete object", 60);
     glutAddSubMenu("Add object", objectId);
+    glutAddSubMenu("Change object", selectObjectMenuId);
     glutAddMenuEntry("Position/Scale", 41);
     glutAddMenuEntry("Rotation/Texture Scale", 55);
     glutAddSubMenu("Material", materialMenuId);
