@@ -341,12 +341,10 @@ void drawMesh(SceneObject sceneObj)
 
     mat4 model =
                     Translate(sceneObj.loc) *
-                    RotateX(sceneObj.angles[0]) * // Having a duplicate call to rotateX or no call at all seems to be the only way to get the background to render??
+                    RotateX(sceneObj.angles[0]) *
                     RotateY(sceneObj.angles[1]) *
                     RotateZ(sceneObj.angles[2]) *
                     Scale(sceneObj.scale);
-    //mat4 model = Translate(sceneObj.loc) * Scale(sceneObj.scale);
-
 
     // Set the model-view matrix for the shaders
     glUniformMatrix4fv( modelViewU, 1, GL_TRUE, view * model );
@@ -527,6 +525,14 @@ static void adjustAngleZTexscale(vec2 az_ts)
     sceneObjs[currObject].texScale+=az_ts[1];
 }
 
+static void deleteObject()
+{
+    if (nObjects > 2){
+        currObject--;
+        nObjects--;
+    }
+}
+
 static void mainmenu(int id)
 {
     deactivateTool();
@@ -541,6 +547,8 @@ static void mainmenu(int id)
         setToolCallbacks(adjustAngleYX, mat2(400, 0, 0, -400),
                          adjustAngleZTexscale, mat2(400, 0, 0, 15) );
     }
+    if (id == 60)
+        deleteObject();
     if (id == 99) exit(0);
 }
 
@@ -563,6 +571,7 @@ static void makeMenu()
 
     glutCreateMenu(mainmenu);
     glutAddMenuEntry("Rotate/Move Camera",50);
+    glutAddMenuEntry("Delete object", 60);
     glutAddSubMenu("Add object", objectId);
     glutAddMenuEntry("Position/Scale", 41);
     glutAddMenuEntry("Rotation/Texture Scale", 55);
