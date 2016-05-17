@@ -344,13 +344,8 @@ void drawMesh(SceneObject sceneObj)
 
     // Set the model matrix - this should combine translation, rotation and scaling based on what's
     // in the sceneObj structure (see near the top of the program).
-
-    mat4 model =
-                    Translate(sceneObj.loc) *
-                    RotateX(sceneObj.angles[0]) *
-                    RotateY(sceneObj.angles[1]) *
-                    RotateZ(sceneObj.angles[2]) *
-                    Scale(sceneObj.scale);
+    mat4 rotation_matrix = RotateX(sceneObj.angles[0]) * RotateY(sceneObj.angles[1]) * RotateZ(sceneObj.angles[2]);
+    mat4 model = Translate(sceneObj.loc) * rotation_matrix * Scale(sceneObj.scale);
 
     // Set the model-view matrix for the shaders
     glUniformMatrix4fv( modelViewU, 1, GL_TRUE, view * model );
@@ -378,13 +373,13 @@ void display( void )
     // Set the view matrix. To start with this just moves the camera
     // backwards.  You'll need to add appropriate rotations.
 
-    mat4 rot = RotateX(camRotUpAndOverDeg) * RotateY(camRotSidewaysDeg);
-    view = Translate(0.0, 0.0, -viewDist) * rot;
+    mat4 rotation_matrix = RotateX(camRotUpAndOverDeg) * RotateY(camRotSidewaysDeg);
+    view = Translate(0.0, 0.0, -viewDist) * rotation_matrix;
 
     SceneObject lightObj1 = sceneObjs[1];
     vec4 light1Position = view * lightObj1.loc ;
     SceneObject lightObj2 = sceneObjs[2];
-    vec4 light2Position = rot * lightObj2.loc ;
+    vec4 light2Position = rotation_matrix * lightObj2.loc ;
 
     glUniform4fv( glGetUniformLocation(shaderProgram, "Light1Position"), 1, light1Position);
     CheckError();
