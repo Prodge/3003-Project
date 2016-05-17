@@ -26,7 +26,8 @@ GLuint shaderProgram; // The number identifying the GLSL shader program
 GLuint vPosition, vNormal, vTexCoord; // IDs for vshader input vars (from glGetAttribLocation)
 GLuint projectionU, modelViewU; // IDs for uniform variables (from glGetUniformLocation)
 
-static float viewDist = 1.5; // Distance from the camera to the centre of the scene
+//Part D - viewDist scaled by 7.5
+static float viewDist = 11.25; // Distance from the camera to the centre of the scene
 static float camRotSidewaysDeg=0; // rotates the camera sideways around the centre
 static float camRotUpAndOverDeg=20; // rotates the camera up and over the centre.
 
@@ -227,7 +228,8 @@ static void adjustScaleY(vec2 sy)
 
 static void doRotate()
 {
-    setToolCallbacks(adjustCamrotsideViewdist, mat2(400,0,0,-2),
+    //Part D - -15 was scaled by 7.5
+    setToolCallbacks(adjustCamrotsideViewdist, mat2(400,0,0,-15),
                      adjustcamSideUp, mat2(400, 0, 0,-90) );
 }
 
@@ -307,10 +309,10 @@ void init( void )
     sceneObjs[1].brightness = 0.2; // The light's brightness is 5 times this (below).
 
     addObject(55); // Sphere for the first light
-    sceneObjs[2].loc = vec4(-2.0, 2.0, -2.0, 1.0);
+    sceneObjs[2].loc = vec4(-2.0, 1.0, -2.0, 1.0);
     sceneObjs[2].scale = 0.2;
     sceneObjs[2].texId = 0; // Plain texture
-    sceneObjs[2].brightness = 0.2; // The light's brightness is 5 times this (below).
+    sceneObjs[2].brightness = 0.4; // The light's brightness is 5 times this (below).
 
     addObject(rand() % numMeshes); // A test mesh
 
@@ -344,13 +346,8 @@ void drawMesh(SceneObject sceneObj)
 
     // Set the model matrix - this should combine translation, rotation and scaling based on what's
     // in the sceneObj structure (see near the top of the program).
-
-    mat4 model =
-                    Translate(sceneObj.loc) *
-                    RotateX(sceneObj.angles[0]) *
-                    RotateY(sceneObj.angles[1]) *
-                    RotateZ(sceneObj.angles[2]) *
-                    Scale(sceneObj.scale);
+    mat4 rotation_matrix = RotateX(sceneObj.angles[0]) * RotateY(sceneObj.angles[1]) * RotateZ(sceneObj.angles[2]);
+    mat4 model = Translate(sceneObj.loc) * rotation_matrix * Scale(sceneObj.scale);
 
     // Set the model-view matrix for the shaders
     glUniformMatrix4fv( modelViewU, 1, GL_TRUE, view * model );
@@ -378,20 +375,20 @@ void display( void )
     // Set the view matrix. To start with this just moves the camera
     // backwards.  You'll need to add appropriate rotations.
 
-    mat4 rot = RotateX(camRotUpAndOverDeg) * RotateY(camRotSidewaysDeg);
-    view = Translate(0.0, 0.0, -viewDist) * rot;
+    mat4 rotation_matrix = RotateX(camRotUpAndOverDeg) * RotateY(camRotSidewaysDeg);
+    view = Translate(0.0, 0.0, -viewDist) * rotation_matrix;
 
     SceneObject lightObj1 = sceneObjs[1];
     vec4 light1Position = view * lightObj1.loc ;
     SceneObject lightObj2 = sceneObjs[2];
-    vec4 light2Position = rot * lightObj2.loc ;
+    vec4 light2Position = rotation_matrix * lightObj2.loc ;
 
     glUniform4fv( glGetUniformLocation(shaderProgram, "Light1Position"), 1, light1Position);
     CheckError();
     glUniform4fv( glGetUniformLocation(shaderProgram, "Light2Position"), 1, light2Position);
     CheckError();
-    glUniform3fv( glGetUniformLocation(shaderProgram, "Light1rgbBright"), 1, lightObj1.rgb * lightObj1.brightness );
-    glUniform3fv( glGetUniformLocation(shaderProgram, "Light2rgbBright"), 1, lightObj2.rgb * lightObj2.brightness ); 
+    glUniform3fv( glGetUniformLocation(shaderProgram, "Light1RgbBrightness"), 1, lightObj1.rgb * lightObj1.brightness );
+    glUniform3fv( glGetUniformLocation(shaderProgram, "Light2RgbBrightness"), 1, lightObj2.rgb * lightObj2.brightness ); 
 
     for (int i=0; i < nObjects; i++) {
         SceneObject so = sceneObjs[i];
@@ -666,17 +663,18 @@ void reshape( int width, int height )
     //         that the same part of the scene is visible across the width of
     //         the window.
 
-    GLfloat nearDist = 0.02;
+    //Part D - nearDist scaled by 7.5, projection 100 by 7.5
+    GLfloat nearDist = 0.2/7.5;
     if (width<height){
          projection = Frustum(-nearDist, nearDist,
                          -nearDist*(float)height/(float)width,
                          nearDist*(float)height/(float)width,
-                         0.2, 1000.0);
+                         0.2, 750.0);
     }else{
          projection = Frustum(-nearDist*(float)width/(float)height,
                          nearDist*(float)width/(float)height,
                          -nearDist, nearDist,
-                         0.2, 1000.0);
+                         0.2, 750.0);
     }
 }
 

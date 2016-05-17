@@ -13,9 +13,9 @@ void main()
 {
     vec4 vpos = vec4(vPosition, 1.0);
 
+    gl_Position = Projection * ModelView * vpos;
+
     position = vpos;
     normal = vNormal;
-
-    gl_Position = Projection * ModelView * vpos;
     texCoord = vTexCoord;
 }
