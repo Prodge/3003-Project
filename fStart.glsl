@@ -8,6 +8,7 @@ uniform sampler2D texture;
 uniform vec3 AmbientProduct, DiffuseProduct, SpecularProduct;
 uniform mat4 ModelView;
 uniform float Shininess;
+uniform float texScale;
 uniform vec4 Light1Position;
 uniform vec4 Light2Position;
 uniform vec3 Light1RgbBrightness;
@@ -67,6 +68,6 @@ void main()
 
     color.rgb = ((ambient1 + diffuse1) * lightDistanceMultiplier) + globalAmbient + ambient2 + diffuse2;
     color.a = 1.0;
-    gl_FragColor = (color * texture2D( texture, texCoord * 2.0 )) + vec4(specular1*lightDistanceMultiplier + specular2,1.0);
+    gl_FragColor = (color * texture2D( texture, texCoord * 2.0 * texScale )) + vec4(specular1*lightDistanceMultiplier + specular2,1.0);
 
 }
