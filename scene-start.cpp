@@ -26,6 +26,7 @@ using namespace std;        // Import the C++ standard functions (e.g., min)
 GLuint shaderProgram; // The number identifying the GLSL shader program
 GLuint vPosition, vNormal, vTexCoord; // IDs for vshader input vars (from glGetAttribLocation)
 GLuint projectionU, modelViewU; // IDs for uniform variables (from glGetUniformLocation)
+GLuint vBoneIDs, vBoneWeights, uBoneTransforms; 
 
 //Part D - viewDist scaled by 7.5
 static float viewDist = 11.25; // Distance from the camera to the centre of the scene
@@ -288,6 +289,8 @@ void init( void )
     // Initialize the vertex position attribute from the vertex shader
     vPosition = glGetAttribLocation( shaderProgram, "vPosition" );
     vNormal = glGetAttribLocation( shaderProgram, "vNormal" ); CheckError();
+    vBoneIDs = glGetAttribLocation( shaderProgram, "boneIDs" );
+    vBoneWeights = glGetAttribLocation( shaderProgram, "boneWeights" );
 
     // Likewise, initialize the vertex texture coordinates attribute.
     vTexCoord = glGetAttribLocation( shaderProgram, "vTexCoord" );
@@ -295,6 +298,7 @@ void init( void )
 
     projectionU = glGetUniformLocation(shaderProgram, "Projection");
     modelViewU = glGetUniformLocation(shaderProgram, "ModelView");
+    uBoneTransforms = glGetUniformLocation( shaderProgram, "boneTransforms" );
 
     // Objects 0, and 1 are the ground and the first light.
     addObject(0); // Square for the ground
