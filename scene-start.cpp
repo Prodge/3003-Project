@@ -178,7 +178,7 @@ void loadMeshIfNotAlreadyLoaded(int meshNumber)
 
     glBindBuffer( GL_ARRAY_BUFFER, buffers[0] ); CheckError();
     glBufferData( GL_ARRAY_BUFFER, sizeof(int)*4*mesh->mNumVertices, boneIDs, GL_STATIC_DRAW ); CheckError();
-    glVertexAttribPointer(vBoneIDs, 4, GL_INT, 0, BUFFER_OFFSET(0)); CheckError();
+    glVertexAttribIPointer(vBoneIDs, 4, GL_INT, 0, BUFFER_OFFSET(0)); CheckError(); 
     glEnableVertexAttribArray(vBoneIDs);     CheckError();
 
     glBindBuffer( GL_ARRAY_BUFFER, buffers[1] );
@@ -399,7 +399,7 @@ void drawMesh(SceneObject sceneObj)
 
     mat4 boneTransforms[nBones];     // was: mat4 boneTransforms[mesh->mNumBones];
     calculateAnimPose(meshes[sceneObj.meshId], scenes[sceneObj.meshId], 0,
-            <POSE_TIME>, boneTransforms);
+            1.0, boneTransforms);
     glUniformMatrix4fv(uBoneTransforms, nBones, GL_TRUE,
             (const GLfloat *)boneTransforms);
 

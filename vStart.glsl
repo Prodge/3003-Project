@@ -1,3 +1,5 @@
+#version 120
+
 attribute vec3 vPosition;
 attribute vec3 vNormal;
 attribute vec2 vTexCoord;
@@ -20,9 +22,11 @@ void main()
     boneTransform += boneWeights[3] * boneTransforms[boneIDs[3]];
 
     vec4 vpos = vec4(vPosition, 1.0) * boneTransform;
+    vec3 normalTransform = mat3(boneTransform) * vNormal;
+
     gl_Position = Projection * ModelView * vpos;
 
     position = vpos;
-    normal = mat3(boneTransform) * vNormal;
+    normal = normalTransform;
     texCoord = vTexCoord;
 }
