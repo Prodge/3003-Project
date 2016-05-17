@@ -55,26 +55,18 @@ void main()
     }
 
     vec3 globalAmbient = vec3(0.1, 0.1, 0.1);
-    float dropoff = sqrt(dot(L1vec, L1vec))/15.0 + 1.0; 
-    color.rgb = ((ambient1 + diffuse1) / dropoff) + globalAmbient + ambient2 + diffuse2;
-    color.a = 1.0;
-    gl_FragColor = (color * texture2D( texture, texCoord * 2.0 )) + vec4(specular1/dropoff + specular2,1.0);
-
-    /**
     // lightDistanceMultiplier gets closer to maxLightDistanceMultiplier as the light gets closer
     // lightDistanceMultiplier gets smaller as the light gets further away (averageDistanceToLight increases)
     // Falloff changes the rate at which this occurs by modifying the averageDistanceToLight by a constant factor
     float falloff = 10.0;
     float minDistance = 0.5;
-    float averageDistanceToLight = abs(Lvec.x) + abs(Lvec.y) + abs(Lvec.z) + minDistance;
+    float averageDistanceToLight = abs(L1vec.x) + abs(L1vec.y) + abs(L1vec.z) + minDistance;
     float maxLightDistanceMultiplier = 0.8;
     float lightDistanceMultiplier = maxLightDistanceMultiplier/(averageDistanceToLight/falloff);
 
-    // globalAmbient is independent of distance from the light source
-    vec3 globalAmbient = vec3(0.1, 0.1, 0.1);
-    color.rgb = globalAmbient + (ambient + ambient2 + diffuse + diffuse2 + specular + specular2) * lightDistanceMultiplier;
+
+    color.rgb = ((ambient1 + diffuse1) * lightDistanceMultiplier) + globalAmbient + ambient2 + diffuse2;
     color.a = 1.0;
-    gl_FragColor = color * texture2D( texture, texCoord * 2.0 );
-    **/
+    gl_FragColor = (color * texture2D( texture, texCoord * 2.0 )) + vec4(specular1*lightDistanceMultiplier + specular2,1.0);
 
 }
