@@ -309,10 +309,10 @@ void init( void )
     sceneObjs[1].brightness = 0.2; // The light's brightness is 5 times this (below).
 
     addObject(55); // Sphere for the first light
-    sceneObjs[2].loc = vec4(-2.0, 2.0, -2.0, 1.0);
+    sceneObjs[2].loc = vec4(-2.0, 1.0, -2.0, 1.0);
     sceneObjs[2].scale = 0.2;
     sceneObjs[2].texId = 0; // Plain texture
-    sceneObjs[2].brightness = 0.2; // The light's brightness is 5 times this (below).
+    sceneObjs[2].brightness = 0.4; // The light's brightness is 5 times this (below).
 
     addObject(rand() % numMeshes); // A test mesh
 
@@ -387,8 +387,8 @@ void display( void )
     CheckError();
     glUniform4fv( glGetUniformLocation(shaderProgram, "Light2Position"), 1, light2Position);
     CheckError();
-    glUniform3fv( glGetUniformLocation(shaderProgram, "Light1rgbBright"), 1, lightObj1.rgb * lightObj1.brightness );
-    glUniform3fv( glGetUniformLocation(shaderProgram, "Light2rgbBright"), 1, lightObj2.rgb * lightObj2.brightness ); 
+    glUniform3fv( glGetUniformLocation(shaderProgram, "Light1RgbBrightness"), 1, lightObj1.rgb * lightObj1.brightness );
+    glUniform3fv( glGetUniformLocation(shaderProgram, "Light2RgbBrightness"), 1, lightObj2.rgb * lightObj2.brightness ); 
 
     for (int i=0; i < nObjects; i++) {
         SceneObject so = sceneObjs[i];

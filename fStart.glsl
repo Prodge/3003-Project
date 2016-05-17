@@ -1,4 +1,5 @@
 vec4 color;
+
 varying vec4 position;
 varying vec3 normal;
 varying vec2 texCoord;  // The third coordinate is always 0.0 and is discarded
@@ -6,12 +7,11 @@ varying vec2 texCoord;  // The third coordinate is always 0.0 and is discarded
 uniform sampler2D texture;
 uniform vec3 AmbientProduct, DiffuseProduct, SpecularProduct;
 uniform mat4 ModelView;
-uniform mat4 Projection;
-uniform vec4 Light1Position;
 uniform float Shininess;
+uniform vec4 Light1Position;
 uniform vec4 Light2Position;
-uniform vec3 Light1rgbBright;
-uniform vec3 Light2rgbBright;
+uniform vec3 Light1RgbBrightness;
+uniform vec3 Light2RgbBrightness;
 
 void main()
 {
@@ -19,13 +19,14 @@ void main()
     vec3 pos = (ModelView * position).xyz;
 
     // The vector to the light from the vertex
-    vec3 Lvec = Light1Position.xyz - pos;
+    vec3 L1vec = Light1Position.xyz - pos;
+    vec3 L2vec = Light2Position.xyz;
 
     // Unit direction vectors for Blinn-Phong shading calculation
-    vec3 L = normalize( Lvec );   // Direction to the light source
-    vec3 L2 = normalize( Light2Position.xyz );   // Direction to the light source
+    vec3 L1 = normalize( L1vec );   // Direction to the light source
+    vec3 L2 = normalize( L2vec );   // Direction to the light source
     vec3 E = normalize( -pos );   // Direction to the eye/camera
-    vec3 H = normalize( L + E );  // Halfway vector
+    vec3 H1 = normalize( L1 + E );  // Halfway vector
     vec3 H2 = normalize( L2 + E );  // Halfway vector
 
     // Transform vertex normal into eye coordinates (assumes scaling
@@ -33,31 +34,31 @@ void main()
     vec3 N = normalize( (ModelView*vec4(normal, 0.0)).xyz );
 
     // Compute terms in the illumination equation
-    vec3 ambient = Light1rgbBright * AmbientProduct;
-    vec3 ambient2 = Light2rgbBright * AmbientProduct;
+    vec3 ambient1 = Light1RgbBrightness * AmbientProduct;
+    vec3 ambient2 = Light2RgbBrightness * AmbientProduct;
 
-    float Kd = max( dot(L, N), 0.0 );
-    vec3  diffuse = Light1rgbBright * Kd*DiffuseProduct;
+    float Kd1 = max( dot(L1, N), 0.0 );
+    vec3  diffuse1 = Light1RgbBrightness * Kd1 * DiffuseProduct;
     float Kd2 = max( dot(L2, N), 0.0 );
-    vec3  diffuse2 = Light2rgbBright * Kd2*DiffuseProduct;
+    vec3  diffuse2 = Light2RgbBrightness * Kd2 * DiffuseProduct;
 
-    float Ks = pow( max(dot(N, H), 0.0), Shininess );
-    vec3  specular = Light1rgbBright * Ks * SpecularProduct;
+    float Ks1 = pow( max(dot(N, H1), 0.0), Shininess );
+    vec3  specular1 = Light1RgbBrightness * Ks1 * SpecularProduct;
     float Ks2 = pow( max(dot(N, H2), 0.0), Shininess );
-    vec3  specular2 = Light2rgbBright * Ks2 * SpecularProduct;
+    vec3  specular2 = Light2RgbBrightness * Ks2 * SpecularProduct;
 
-    if (dot(L, N) < 0.0 ) {
-        specular = vec3(0.0, 0.0, 0.0);
+    if (dot(L1, N) < 0.0 ) {
+        specular1 = vec3(0.0, 0.0, 0.0);
     }
     if (dot(L2, N) < 0.0 ) {
         specular2 = vec3(0.0, 0.0, 0.0);
     }
 
     vec3 globalAmbient = vec3(0.1, 0.1, 0.1);
-    float dropoff = sqrt(dot(Lvec, Lvec))/15.0 + 1.0; 
-    color.rgb = ((ambient + diffuse) / dropoff) + globalAmbient + ambient2 + diffuse2;
+    float dropoff = sqrt(dot(L1vec, L1vec))/15.0 + 1.0; 
+    color.rgb = ((ambient1 + diffuse1) / dropoff) + globalAmbient + ambient2 + diffuse2;
     color.a = 1.0;
-    gl_FragColor = (color * texture2D( texture, texCoord * 2.0 )) + vec4(specular/dropoff + specular2,1.0);
+    gl_FragColor = (color * texture2D( texture, texCoord * 2.0 )) + vec4(specular1/dropoff + specular2,1.0);
 
     /**
     // lightDistanceMultiplier gets closer to maxLightDistanceMultiplier as the light gets closer
