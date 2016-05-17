@@ -26,7 +26,8 @@ GLuint shaderProgram; // The number identifying the GLSL shader program
 GLuint vPosition, vNormal, vTexCoord; // IDs for vshader input vars (from glGetAttribLocation)
 GLuint projectionU, modelViewU; // IDs for uniform variables (from glGetUniformLocation)
 
-static float viewDist = 1.5; // Distance from the camera to the centre of the scene
+//Part D - viewDist scaled by 7.5
+static float viewDist = 11.25; // Distance from the camera to the centre of the scene
 static float camRotSidewaysDeg=0; // rotates the camera sideways around the centre
 static float camRotUpAndOverDeg=20; // rotates the camera up and over the centre.
 
@@ -227,7 +228,8 @@ static void adjustScaleY(vec2 sy)
 
 static void doRotate()
 {
-    setToolCallbacks(adjustCamrotsideViewdist, mat2(400,0,0,-2),
+    //Part D - -15 was scaled by 7.5
+    setToolCallbacks(adjustCamrotsideViewdist, mat2(400,0,0,-15),
                      adjustcamSideUp, mat2(400, 0, 0,-90) );
 }
 
@@ -661,17 +663,18 @@ void reshape( int width, int height )
     //         that the same part of the scene is visible across the width of
     //         the window.
 
-    GLfloat nearDist = 0.02;
+    //Part D - nearDist scaled by 7.5, projection 100 by 7.5
+    GLfloat nearDist = 0.2/7.5;
     if (width<height){
          projection = Frustum(-nearDist, nearDist,
                          -nearDist*(float)height/(float)width,
                          nearDist*(float)height/(float)width,
-                         0.2, 1000.0);
+                         0.2, 750.0);
     }else{
          projection = Frustum(-nearDist*(float)width/(float)height,
                          nearDist*(float)width/(float)height,
                          -nearDist, nearDist,
-                         0.2, 1000.0);
+                         0.2, 750.0);
     }
 }
 
