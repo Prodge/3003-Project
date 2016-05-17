@@ -385,6 +385,23 @@ void drawMesh(SceneObject sceneObj)
     CheckError();
     glBindVertexArray( vaoIDs[sceneObj.meshId] );
     CheckError();
+    
+    int nBones = meshes[sceneObj.meshId]->mNumBones;
+    if(nBones == 0)
+        // If no bones, just a single identity matrix is used
+        nBones = 1;
+
+    // get boneTransforms for the first (0th) animation at the given
+    // time (a float measured in frames)
+    // (Replace <POSE_TIME> appropriately with a float expression
+    // giving the time relative to the start of the animation,
+    // measured in frames, like the frame numbers in Blender.)
+
+    mat4 boneTransforms[nBones];     // was: mat4 boneTransforms[mesh->mNumBones];
+    calculateAnimPose(meshes[sceneObj.meshId], scenes[sceneObj.meshId], 0,
+            <POSE_TIME>, boneTransforms);
+    glUniformMatrix4fv(uBoneTransforms, nBones, GL_TRUE,
+            (const GLfloat *)boneTransforms);
 
     glDrawElements(GL_TRIANGLES, meshes[sceneObj.meshId]->mNumFaces * 3,
                    GL_UNSIGNED_INT, NULL);
