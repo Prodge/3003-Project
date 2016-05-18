@@ -129,3 +129,12 @@ void calculateAnimPose(aiMesh* mesh, const aiScene* scene, int animNum, float po
                                   vec4(bTrans.d1, bTrans.d2, bTrans.d3, bTrans.d4));   // Convert to mat4
     }
 }
+
+double getAnimDuration(aiMesh *mesh, const aiScene *scene, int animNum) {
+    if (mesh->mNumBones == 0 || animNum < 0) {
+        return 0.0;
+    }
+
+    aiAnimation *anim = scene->mAnimations[animNum];
+    return anim->mDuration;
+}

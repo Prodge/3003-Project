@@ -21,12 +21,10 @@ GLint windowHeight=640, windowWidth=960;
 
 using namespace std;        // Import the C++ standard functions (e.g., min)
 
-
 // IDs for the GLSL program and GLSL variables.
 GLuint shaderProgram; // The number identifying the GLSL shader program
-GLuint vPosition, vNormal, vTexCoord; // IDs for vshader input vars (from glGetAttribLocation)
-GLuint projectionU, modelViewU; // IDs for uniform variables (from glGetUniformLocation)
-GLuint vBoneIDs, vBoneWeights, uBoneTransforms; 
+GLuint vPosition, vNormal, vTexCoord, vBoneIDs, vBoneWeights; // IDs for vshader input vars (from glGetAttribLocation)
+GLuint projectionU, modelViewU, uBoneTransforms; // IDs for uniform variables (from glGetUniformLocation)
 
 //Part D - viewDist scaled by 7.5
 static float viewDist = 11.25; // Distance from the camera to the centre of the scene
@@ -124,7 +122,7 @@ void loadMeshIfNotAlreadyLoaded(int meshNumber)
     const aiScene* scene = loadScene(meshNumber);
     scenes[meshNumber] = scene;
     aiMesh* mesh = scene->mMeshes[0];
-    meshes[meshNumber] = mesh;;
+    meshes[meshNumber] = mesh;
 
     glBindVertexArray( vaoIDs[meshNumber] );
 
@@ -312,8 +310,9 @@ void init( void )
     // Initialize the vertex position attribute from the vertex shader
     vPosition = glGetAttribLocation( shaderProgram, "vPosition" );
     vNormal = glGetAttribLocation( shaderProgram, "vNormal" ); CheckError();
-    vBoneIDs = glGetAttribLocation( shaderProgram, "boneIDs" );
-    vBoneWeights = glGetAttribLocation( shaderProgram, "boneWeights" );
+    vBoneIDs = glGetAttribLocation( shaderProgram, "boneIDs" );CheckError();
+    vBoneWeights = glGetAttribLocation( shaderProgram, "boneWeights" );CheckError();
+
 
     // Likewise, initialize the vertex texture coordinates attribute.
     vTexCoord = glGetAttribLocation( shaderProgram, "vTexCoord" );
@@ -358,6 +357,7 @@ void drawMesh(SceneObject sceneObj)
 
     // Activate a texture, loading if needed.
     loadTextureIfNotAlreadyLoaded(sceneObj.texId);
+
     glActiveTexture(GL_TEXTURE0 );
     glBindTexture(GL_TEXTURE_2D, textureIDs[sceneObj.texId]);
 
@@ -381,8 +381,19 @@ void drawMesh(SceneObject sceneObj)
     glUniformMatrix4fv( modelViewU, 1, GL_TRUE, view * model );
 
     // Activate the VAO for a mesh, loading if needed.
+    //loadMeshIfNotAlreadyLoaded(sceneObj.meshId);
     loadMeshIfNotAlreadyLoaded(sceneObj.meshId);
     CheckError();
+    aiMesh *mesh = meshes[sceneObj.meshId];
+    const aiScene *scene = scenes[sceneObj.meshId];
+
+    float poseTime = 0.0f;
+    if (sceneObj.meshId >= 56) {
+        double framesPerSecond = 30.0;
+        double elapsedTime = glutGet(GLUT_ELAPSED_TIME) / 1000.0 * framesPerSecond;
+        double animDuration = getAnimDuration(mesh, scene, 0);
+        poseTime = fmod(elapsedTime, animDuration);
+    }
     glBindVertexArray( vaoIDs[sceneObj.meshId] );
     CheckError();
     
@@ -399,7 +410,7 @@ void drawMesh(SceneObject sceneObj)
 
     mat4 boneTransforms[nBones];     // was: mat4 boneTransforms[mesh->mNumBones];
     calculateAnimPose(meshes[sceneObj.meshId], scenes[sceneObj.meshId], 0,
-            1.0, boneTransforms);
+            poseTime, boneTransforms);
     glUniformMatrix4fv(uBoneTransforms, nBones, GL_TRUE,
             (const GLfloat *)boneTransforms);
 
