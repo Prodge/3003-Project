@@ -117,8 +117,6 @@ void loadMeshIfNotAlreadyLoaded(int meshNumber)
     if (meshes[meshNumber] != NULL)
         return; // Already loaded
 
-    //aiMesh* mesh = loadMesh(meshNumber);
-    //meshes[meshNumber] = mesh;
     const aiScene* scene = loadScene(meshNumber);
     scenes[meshNumber] = scene;
     aiMesh* mesh = scene->mMeshes[0];
@@ -313,7 +311,6 @@ void init( void )
     vBoneIDs = glGetAttribLocation( shaderProgram, "boneIDs" );CheckError();
     vBoneWeights = glGetAttribLocation( shaderProgram, "boneWeights" );CheckError();
 
-
     // Likewise, initialize the vertex texture coordinates attribute.
     vTexCoord = glGetAttribLocation( shaderProgram, "vTexCoord" );
     CheckError();
@@ -354,10 +351,8 @@ void init( void )
 
 void drawMesh(SceneObject sceneObj)
 {
-
     // Activate a texture, loading if needed.
     loadTextureIfNotAlreadyLoaded(sceneObj.texId);
-
     glActiveTexture(GL_TEXTURE0 );
     glBindTexture(GL_TEXTURE_2D, textureIDs[sceneObj.texId]);
 
@@ -381,18 +376,11 @@ void drawMesh(SceneObject sceneObj)
     glUniformMatrix4fv( modelViewU, 1, GL_TRUE, view * model );
 
     // Activate the VAO for a mesh, loading if needed.
-    //loadMeshIfNotAlreadyLoaded(sceneObj.meshId);
     loadMeshIfNotAlreadyLoaded(sceneObj.meshId);
     CheckError();
-    aiMesh *mesh = meshes[sceneObj.meshId];
-    const aiScene *scene = scenes[sceneObj.meshId];
-
     float poseTime = 0.0f;
     if (sceneObj.meshId >= 56) {
-        double framesPerSecond = 30.0;
-        double elapsedTime = glutGet(GLUT_ELAPSED_TIME) / 1000.0 * framesPerSecond;
-        double animDuration = getAnimDuration(mesh, scene, 0);
-        poseTime = fmod(elapsedTime, animDuration);
+        poseTime = 1.0 * glutGet(GLUT_ELAPSED_TIME);
     }
     glBindVertexArray( vaoIDs[sceneObj.meshId] );
     CheckError();
@@ -401,12 +389,6 @@ void drawMesh(SceneObject sceneObj)
     if(nBones == 0)
         // If no bones, just a single identity matrix is used
         nBones = 1;
-
-    // get boneTransforms for the first (0th) animation at the given
-    // time (a float measured in frames)
-    // (Replace <POSE_TIME> appropriately with a float expression
-    // giving the time relative to the start of the animation,
-    // measured in frames, like the frame numbers in Blender.)
 
     mat4 boneTransforms[nBones];     // was: mat4 boneTransforms[mesh->mNumBones];
     calculateAnimPose(meshes[sceneObj.meshId], scenes[sceneObj.meshId], 0,
