@@ -66,6 +66,8 @@ typedef struct {
     int meshId;
     int texId;
     float texScale;
+    clock_t animStart;
+    float FPS;
 } SceneObject;
 
 const int maxObjects = 1024; // Scenes with more than 1024 objects seem unlikely
@@ -267,6 +269,8 @@ static void addObject(int id)
 
     if (id!=0 && id!=55)
         sceneObjs[nObjects].scale = 0.005;
+    sceneObjs[nObjects].animStart = glutGet(GLUT_ELAPSED_TIME);
+    sceneObjs[nObjects].FPS = 40.0;
 
     sceneObjs[nObjects].rgb[0] = 0.7; sceneObjs[nObjects].rgb[1] = 0.7;
     sceneObjs[nObjects].rgb[2] = 0.7; sceneObjs[nObjects].brightness = 1.0;
@@ -378,10 +382,10 @@ void drawMesh(SceneObject sceneObj)
     // Activate the VAO for a mesh, loading if needed.
     loadMeshIfNotAlreadyLoaded(sceneObj.meshId);
     CheckError();
-    float poseTime = 0.0f;
-    if (sceneObj.meshId >= 56) {
-        poseTime = 1.0 * glutGet(GLUT_ELAPSED_TIME);
-    }
+    //float poseTime = 0.0f;
+    //if (sceneObj.meshId >= 56) {
+    //    poseTime = 1.0 * glutGet(GLUT_ELAPSED_TIME);
+    //}
     glBindVertexArray( vaoIDs[sceneObj.meshId] );
     CheckError();
     
@@ -391,8 +395,13 @@ void drawMesh(SceneObject sceneObj)
         nBones = 1;
 
     mat4 boneTransforms[nBones];     // was: mat4 boneTransforms[mesh->mNumBones];
+    
+    float numFrames = 40.0;
+    float POSE_TIME = fmod (sceneObj.FPS * (glutGet(GLUT_ELAPSED_TIME) - sceneObj.animStart)/1000, numFrames);
+    std::cout << POSE_TIME << std::endl;   
+
     calculateAnimPose(meshes[sceneObj.meshId], scenes[sceneObj.meshId], 0,
-            poseTime, boneTransforms);
+            POSE_TIME, boneTransforms);
     glUniformMatrix4fv(uBoneTransforms, nBones, GL_TRUE,
             (const GLfloat *)boneTransforms);
 

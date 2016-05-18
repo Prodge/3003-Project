@@ -21,7 +21,7 @@ void main()
                          boneWeights[2] * boneTransforms[boneIDs[2]] +
                          boneWeights[3] * boneTransforms[boneIDs[3]];
 
-    vec4 vpos = vec4(vPosition, 1.0) * boneTransform;
+    vec4 vpos = boneTransform * vec4(vPosition, 1.0);
     vec3 normalTransform = mat3(boneTransform) * vNormal;
 
     gl_Position = Projection * ModelView * vpos;
