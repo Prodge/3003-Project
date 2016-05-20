@@ -346,8 +346,8 @@ static void objectWalkDiagonal(int i){
 
     if (so.loc[0] <= limits[0]) sceneObjs[i].actionx = "plus";
     if (so.loc[0] >= limits[1]) sceneObjs[i].actionx = "minus";
-    if (so.loc[1] <= limits[2]) sceneObjs[i].actiony = "plus";
-    if (so.loc[1] >= limits[3]) sceneObjs[i].actiony = "minus";
+    if (so.loc[2] <= limits[2]) sceneObjs[i].actiony = "plus";
+    if (so.loc[2] >= limits[3]) sceneObjs[i].actiony = "minus";
 
     if (sceneObjs[i].actionx=="minus") sceneObjs[i].loc[0] -= displacement_factor;
     if (sceneObjs[i].actiony=="minus") sceneObjs[i].loc[2] -= displacement_factor;
