@@ -1,3 +1,5 @@
+#version 120
+
 vec4 color;
 
 varying vec4 position;
