@@ -67,7 +67,6 @@ typedef struct {
     int texId;
     float texScale;
     int start_time;
-    int FPC;
     int animation_type;
     float speed;
     float move_distance;
@@ -75,7 +74,6 @@ typedef struct {
     bool walkalongx;
     bool animation_paused;
     bool reached_max;
-    string current_direction;
     string actionx;
     string actiony;
     vec4 start_position;
@@ -247,7 +245,6 @@ static void adjustcamSideUp(vec2 su)
 static void adjustLocXZ(vec2 xz)
 {
     sceneObjs[toolObj].loc[0]+=xz[0]; sceneObjs[toolObj].loc[2]+=xz[1];
-    std::cout << sceneObjs[currObject].loc << std::endl;   
     //restricts objects to be within ground
     if (sceneObjs[toolObj].loc[0]>=sceneObjs[0].scale){
         sceneObjs[toolObj].loc[0] = sceneObjs[0].scale;
@@ -286,54 +283,51 @@ static void doRotate()
 //------Animation Functions---------------------------------------------------
 //----------------------------------------------------------------------------
 
-static void faceBackward(int object_num){
-    if (sceneObjs[object_num].current_direction == "forward"){
-        sceneObjs[object_num].angles[1] += 180;
-    }else if (sceneObjs[object_num].current_direction == "right"){
-        sceneObjs[object_num].angles[1] += 90;
+static void faceBackward(int object_num, bool diagonal=false){
+    if (diagonal){
+        sceneObjs[object_num].angles[1] = 225;
+    }else{
+        sceneObjs[object_num].angles[1] = 180;
     }
 }
 
-static void faceLeft(int object_num){
-    if (sceneObjs[object_num].current_direction == "right"){
-        sceneObjs[object_num].angles[1] += 180;
-    }else if (sceneObjs[object_num].current_direction == "forward"){
-        sceneObjs[object_num].angles[1] += 90;
+static void faceLeft(int object_num, bool diagonal=false){
+    if (diagonal){
+        sceneObjs[object_num].angles[1] = 135;
+    }else{
+        sceneObjs[object_num].angles[1] = 90;
     }
 }
 
-static void faceRight(int object_num){
-    if (sceneObjs[object_num].current_direction == "left"){
-        sceneObjs[object_num].angles[1] -= 180;
-    }else if (sceneObjs[object_num].current_direction == "backward"){
-        sceneObjs[object_num].angles[1] -= 90;
+static void faceRight(int object_num, bool diagonal=false){
+    if (diagonal){
+        sceneObjs[object_num].angles[1] = 315;
+    }else{
+        sceneObjs[object_num].angles[1] = 270;
     }
 }
 
-static void faceForward(int object_num){
-    if (sceneObjs[object_num].current_direction == "backward"){
-        sceneObjs[object_num].angles[1] -= 180;
-    }else if (sceneObjs[object_num].current_direction == "left"){
-        sceneObjs[object_num].angles[1] -= 90;
+static void faceForward(int object_num, bool diagonal=false){
+    if (diagonal){
+        sceneObjs[object_num].angles[1] = 45;
+    }else{
+        sceneObjs[object_num].angles[1] = 0;
     }
 }
 
-static void setDirection(SceneObject so, int num){
+static void setDirection(int num){
+    SceneObject so = sceneObjs[num];
     if (so.walkback){
         if (so.walkalongx){
             faceLeft(num);
-            sceneObjs[num].current_direction = "left";
         }else{
             faceForward(num);
-            sceneObjs[num].current_direction = "forward";
         }
     }else{
         if (so.walkalongx){
             faceRight(num);
-            sceneObjs[num].current_direction = "right";
         }else{
             faceBackward(num);
-            sceneObjs[num].current_direction = "backward";
         }
     }
 }
@@ -353,6 +347,11 @@ static void objectWalkDiagonal(int i){
     if (sceneObjs[i].actiony=="minus") sceneObjs[i].loc[2] -= displacement_factor;
     if (sceneObjs[i].actionx=="plus") sceneObjs[i].loc[0] += displacement_factor;
     if (sceneObjs[i].actiony=="plus") sceneObjs[i].loc[2] += displacement_factor;
+
+    if (sceneObjs[i].actionx=="minus" && sceneObjs[i].actiony=="plus") faceLeft(i,true); 
+    if (sceneObjs[i].actionx=="minus" && sceneObjs[i].actiony=="minus") faceForward(i,true);
+    if (sceneObjs[i].actionx=="plus" && sceneObjs[i].actiony=="minus") faceRight(i,true);
+    if (sceneObjs[i].actionx=="plus" && sceneObjs[i].actiony=="plus") faceBackward(i,true);
 }
 
 static void objectBounce(int i){
@@ -377,8 +376,10 @@ static void objectBounce(int i){
     }
     if (sceneObjs[i].loc[vec_pos] >= sceneObjs[0].scale){
         sceneObjs[i].walkback = true;
+        setDirection(i);
     }else if(sceneObjs[i].loc[vec_pos] <= (-sceneObjs[0].scale)){
         sceneObjs[i].walkback = false;
+        setDirection(i);
     }
 }
 
@@ -397,18 +398,18 @@ static void objectWalk(int i){
     //checking object restrictions
     if (so.loc[vec_pos] >= (so.start_position[vec_pos]+so.move_distance)){
         sceneObjs[i].walkback = true;
-        setDirection(sceneObjs[i], i);
+        setDirection(i);
     }else if (so.loc[vec_pos] >= sceneObjs[0].scale){
         sceneObjs[i].start_position[vec_pos] = sceneObjs[0].scale - so.move_distance;
         sceneObjs[i].walkback = true;
-        setDirection(sceneObjs[i], i);
+        setDirection(i);
     }else if (so.loc[vec_pos] <= so.start_position[vec_pos]){
         sceneObjs[i].walkback = false;
-        setDirection(sceneObjs[i], i);
+        setDirection(i);
     }else if (so.loc[vec_pos] <= (-sceneObjs[0].scale)){
         sceneObjs[i].start_position[vec_pos] = (-sceneObjs[0].scale) + so.move_distance;
         sceneObjs[i].walkback = false;
-        setDirection(sceneObjs[i], i);
+        setDirection(i);
     }
 }
 
@@ -429,18 +430,16 @@ static void addObject(int id)
     //all models after 55 is regarded as animated models
     if (id>55){
         sceneObjs[nObjects].start_time = glutGet(GLUT_ELAPSED_TIME);
-        sceneObjs[nObjects].FPC = 24.0;
         sceneObjs[nObjects].speed = 3;
         sceneObjs[nObjects].move_distance = 7;
         sceneObjs[nObjects].start_position = sceneObjs[nObjects].loc;
         sceneObjs[nObjects].walkback = false;
         sceneObjs[nObjects].walkalongx = false;
         sceneObjs[nObjects].animation_paused = false;
-        sceneObjs[nObjects].current_direction = "backward";
+        sceneObjs[nObjects].reached_max = false;
         sceneObjs[nObjects].animation_type = 0;
         sceneObjs[nObjects].actiony = "plus";
         sceneObjs[nObjects].actionx = "minus";
-        sceneObjs[nObjects].reached_max = false;
         faceBackward(nObjects);
     }
 
@@ -553,7 +552,7 @@ void drawMesh(SceneObject sceneObj, int object_num)
         }else if (sceneObjs[object_num].animation_type == 1){
             objectBounce(object_num);
         }else if (sceneObjs[object_num].animation_type == 2){
-            objectWalkDiagonal(object_num);
+            if (sceneObjs[object_num].move_distance != 0) objectWalkDiagonal(object_num);
         }
     }
     mat4 model = Translate(sceneObj.loc) * rotation_matrix * Scale(sceneObj.scale);
@@ -566,7 +565,7 @@ void drawMesh(SceneObject sceneObj, int object_num)
     CheckError();
     glBindVertexArray( vaoIDs[sceneObj.meshId] );
     CheckError();
-    
+
     int nBones = meshes[sceneObj.meshId]->mNumBones;
     if(nBones == 0)
         // If no bones, just a single identity matrix is used
@@ -574,9 +573,13 @@ void drawMesh(SceneObject sceneObj, int object_num)
 
     mat4 boneTransforms[nBones];     // was: mat4 boneTransforms[mesh->mNumBones];
     
-    float numFrames = 40.0;
-    float POSE_TIME = fmod (sceneObj.FPC * (glutGet(GLUT_ELAPSED_TIME) - sceneObj.start_time)/1000, numFrames);
-    //std::cout << POSE_TIME << std::endl;   
+    float POSE_TIME = 0.0;
+    if (sceneObjs[object_num].meshId > 55)
+        POSE_TIME = fmod (
+            getAnimTicksPerSecond(scenes[sceneObj.meshId]) * 
+            (glutGet(GLUT_ELAPSED_TIME) - sceneObj.start_time)/1000, 
+            getAnimDuration(scenes[sceneObj.meshId])
+        );
 
     calculateAnimPose(meshes[sceneObj.meshId], scenes[sceneObj.meshId], 0,
             POSE_TIME, boneTransforms);
@@ -825,41 +828,21 @@ static void animationMenu(int id){
         if (sceneObjs[currObject].walkalongx){
             if (sceneObjs[currObject].walkback){
                 faceLeft(currObject);
-                sceneObjs[currObject].current_direction = "left";
             }else{
                 faceRight(currObject);
-                sceneObjs[currObject].current_direction = "right";
             }
         }else{
             if (sceneObjs[currObject].walkback){
                 faceForward(currObject);
-                sceneObjs[currObject].current_direction = "forward";
             }else{
                 faceBackward(currObject);
-                sceneObjs[currObject].current_direction = "backward";
             }
         }
     }
     //change direction
     if (id == 1){
         sceneObjs[currObject].walkback = !sceneObjs[currObject].walkback;
-        if (sceneObjs[currObject].walkback){
-            if (sceneObjs[currObject].walkalongx){
-                faceLeft(currObject);
-                sceneObjs[currObject].current_direction = "left";
-            }else{
-                faceForward(currObject);
-                sceneObjs[currObject].current_direction = "forward";
-            }
-        }else{
-            if (sceneObjs[currObject].walkalongx){
-                faceRight(currObject);
-                sceneObjs[currObject].current_direction = "right";
-            }else{
-                faceBackward(currObject);
-                sceneObjs[currObject].current_direction = "backward";
-            }
-        }
+        setDirection(currObject);
     }
     //pause or resume animation
     if (id == 2){

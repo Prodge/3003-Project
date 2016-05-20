@@ -129,3 +129,13 @@ void calculateAnimPose(aiMesh* mesh, const aiScene* scene, int animNum, float po
                                   vec4(bTrans.d1, bTrans.d2, bTrans.d3, bTrans.d4));   // Convert to mat4
     }
 }
+
+double getAnimTicksPerSecond(const aiScene* scene) {
+    aiAnimation *anim = scene->mAnimations[0];  // animNum = 0 for the first animation
+    return anim->mTicksPerSecond;
+}
+
+double getAnimDuration(const aiScene* scene) {
+    aiAnimation *anim = scene->mAnimations[0];  // animNum = 0 for the first animation
+    return anim->mDuration;
+}
