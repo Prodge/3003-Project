@@ -66,8 +66,19 @@ typedef struct {
     int meshId;
     int texId;
     float texScale;
-    clock_t animStart;
-    float FPS;
+    int start_time;
+    int FPC;
+    int animation_type;
+    float speed;
+    float move_distance;
+    bool walkback;
+    bool walkalongx;
+    bool animation_paused;
+    bool reached_max;
+    string current_direction;
+    string actionx;
+    string actiony;
+    vec4 start_position;
 } SceneObject;
 
 const int maxObjects = 1024; // Scenes with more than 1024 objects seem unlikely
@@ -236,6 +247,21 @@ static void adjustcamSideUp(vec2 su)
 static void adjustLocXZ(vec2 xz)
 {
     sceneObjs[toolObj].loc[0]+=xz[0]; sceneObjs[toolObj].loc[2]+=xz[1];
+    std::cout << sceneObjs[currObject].loc << std::endl;   
+    //restricts objects to be within ground
+    if (sceneObjs[toolObj].loc[0]>=sceneObjs[0].scale){
+        sceneObjs[toolObj].loc[0] = sceneObjs[0].scale;
+    }else if(sceneObjs[toolObj].loc[0]<=-sceneObjs[0].scale){
+        sceneObjs[toolObj].loc[0] = -sceneObjs[0].scale;
+    }
+    if (sceneObjs[toolObj].loc[2]>=sceneObjs[0].scale){
+        sceneObjs[toolObj].loc[2] = sceneObjs[0].scale;
+    }else if(sceneObjs[toolObj].loc[2]<=-sceneObjs[0].scale){
+        sceneObjs[toolObj].loc[2] = -sceneObjs[0].scale;
+    }
+    //set the new start position for the object
+    sceneObjs[toolObj].start_position[0] = sceneObjs[toolObj].loc[0];
+    sceneObjs[toolObj].start_position[2] = sceneObjs[toolObj].loc[2];
 }
 
 static void adjustScaleY(vec2 sy)
@@ -256,6 +282,136 @@ static void doRotate()
                      adjustcamSideUp, mat2(400, 0, 0,-90) );
 }
 
+//----------------------------------------------------------------------------
+//------Animation Functions---------------------------------------------------
+//----------------------------------------------------------------------------
+
+static void faceBackward(int object_num){
+    if (sceneObjs[object_num].current_direction == "forward"){
+        sceneObjs[object_num].angles[1] += 180;
+    }else if (sceneObjs[object_num].current_direction == "right"){
+        sceneObjs[object_num].angles[1] += 90;
+    }
+}
+
+static void faceLeft(int object_num){
+    if (sceneObjs[object_num].current_direction == "right"){
+        sceneObjs[object_num].angles[1] += 180;
+    }else if (sceneObjs[object_num].current_direction == "forward"){
+        sceneObjs[object_num].angles[1] += 90;
+    }
+}
+
+static void faceRight(int object_num){
+    if (sceneObjs[object_num].current_direction == "left"){
+        sceneObjs[object_num].angles[1] -= 180;
+    }else if (sceneObjs[object_num].current_direction == "backward"){
+        sceneObjs[object_num].angles[1] -= 90;
+    }
+}
+
+static void faceForward(int object_num){
+    if (sceneObjs[object_num].current_direction == "backward"){
+        sceneObjs[object_num].angles[1] -= 180;
+    }else if (sceneObjs[object_num].current_direction == "left"){
+        sceneObjs[object_num].angles[1] -= 90;
+    }
+}
+
+static void setDirection(SceneObject so, int num){
+    if (so.walkback){
+        if (so.walkalongx){
+            faceLeft(num);
+            sceneObjs[num].current_direction = "left";
+        }else{
+            faceForward(num);
+            sceneObjs[num].current_direction = "forward";
+        }
+    }else{
+        if (so.walkalongx){
+            faceRight(num);
+            sceneObjs[num].current_direction = "right";
+        }else{
+            faceBackward(num);
+            sceneObjs[num].current_direction = "backward";
+        }
+    }
+}
+
+static void objectWalkDiagonal(int i){
+    SceneObject so = sceneObjs[i];
+
+    float displacement_factor = so.speed * 0.0165;
+    float limits[4] = {so.start_position[0]-so.move_distance, so.start_position[0], so.start_position[2]-(so.move_distance/2), so.start_position[2]+(so.move_distance/2)};
+
+    if (so.loc[0] <= limits[0]) sceneObjs[i].actionx = "plus";
+    if (so.loc[0] >= limits[1]) sceneObjs[i].actionx = "minus";
+    if (so.loc[1] <= limits[2]) sceneObjs[i].actiony = "plus";
+    if (so.loc[1] >= limits[3]) sceneObjs[i].actiony = "minus";
+
+    if (sceneObjs[i].actionx=="minus") sceneObjs[i].loc[0] -= displacement_factor;
+    if (sceneObjs[i].actiony=="minus") sceneObjs[i].loc[2] -= displacement_factor;
+    if (sceneObjs[i].actionx=="plus") sceneObjs[i].loc[0] += displacement_factor;
+    if (sceneObjs[i].actiony=="plus") sceneObjs[i].loc[2] += displacement_factor;
+}
+
+static void objectBounce(int i){
+    SceneObject so = sceneObjs[i];
+
+    float vertical_displacement_factor = so.speed * 0.0165;
+    if (so.reached_max) vertical_displacement_factor *= -1;
+
+    float horizontal_displacement_factor = 1 * 0.0165;
+    if (so.walkback) horizontal_displacement_factor *= -1;
+
+    int vec_pos = 2;
+    if (so.walkalongx) vec_pos = 0;
+
+    sceneObjs[i].loc[1] += vertical_displacement_factor;
+    sceneObjs[i].loc[vec_pos] += horizontal_displacement_factor;
+
+    if (sceneObjs[i].loc[1] >= so.move_distance){
+        sceneObjs[i].reached_max = true;
+    }else if(sceneObjs[i].loc[1] <= 0.0){
+        sceneObjs[i].reached_max = false;
+    }
+    if (sceneObjs[i].loc[vec_pos] >= sceneObjs[0].scale){
+        sceneObjs[i].walkback = true;
+    }else if(sceneObjs[i].loc[vec_pos] <= (-sceneObjs[0].scale)){
+        sceneObjs[i].walkback = false;
+    }
+}
+
+static void objectWalk(int i){
+    SceneObject so = sceneObjs[i];
+
+    //setting direction and object face
+    float vertical_displacement_factor = so.speed * 0.0165;
+    if (so.walkback) vertical_displacement_factor *= -1;
+
+    int vec_pos = 2;
+    if (so.walkalongx) vec_pos = 0;
+
+    sceneObjs[i].loc[vec_pos] += vertical_displacement_factor;
+
+    //checking object restrictions
+    if (so.loc[vec_pos] >= (so.start_position[vec_pos]+so.move_distance)){
+        sceneObjs[i].walkback = true;
+        setDirection(sceneObjs[i], i);
+    }else if (so.loc[vec_pos] >= sceneObjs[0].scale){
+        sceneObjs[i].start_position[vec_pos] = sceneObjs[0].scale - so.move_distance;
+        sceneObjs[i].walkback = true;
+        setDirection(sceneObjs[i], i);
+    }else if (so.loc[vec_pos] <= so.start_position[vec_pos]){
+        sceneObjs[i].walkback = false;
+        setDirection(sceneObjs[i], i);
+    }else if (so.loc[vec_pos] <= (-sceneObjs[0].scale)){
+        sceneObjs[i].start_position[vec_pos] = (-sceneObjs[0].scale) + so.move_distance;
+        sceneObjs[i].walkback = false;
+        setDirection(sceneObjs[i], i);
+    }
+}
+
 //------Add an object to the scene--------------------------------------------
 
 static void addObject(int id)
@@ -266,11 +422,27 @@ static void addObject(int id)
     sceneObjs[nObjects].loc[1] = 0.0;
     sceneObjs[nObjects].loc[2] = currPos[1];
     sceneObjs[nObjects].loc[3] = 1.0;
-
+    
     if (id!=0 && id!=55)
         sceneObjs[nObjects].scale = 0.005;
-    sceneObjs[nObjects].animStart = glutGet(GLUT_ELAPSED_TIME);
-    sceneObjs[nObjects].FPS = 40.0;
+    
+    //all models after 55 is regarded as animated models
+    if (id>55){
+        sceneObjs[nObjects].start_time = glutGet(GLUT_ELAPSED_TIME);
+        sceneObjs[nObjects].FPC = 24.0;
+        sceneObjs[nObjects].speed = 3;
+        sceneObjs[nObjects].move_distance = 7;
+        sceneObjs[nObjects].start_position = sceneObjs[nObjects].loc;
+        sceneObjs[nObjects].walkback = false;
+        sceneObjs[nObjects].walkalongx = false;
+        sceneObjs[nObjects].animation_paused = false;
+        sceneObjs[nObjects].current_direction = "backward";
+        sceneObjs[nObjects].animation_type = 0;
+        sceneObjs[nObjects].actiony = "plus";
+        sceneObjs[nObjects].actionx = "minus";
+        sceneObjs[nObjects].reached_max = false;
+        faceBackward(nObjects);
+    }
 
     sceneObjs[nObjects].rgb[0] = 0.7; sceneObjs[nObjects].rgb[1] = 0.7;
     sceneObjs[nObjects].rgb[2] = 0.7; sceneObjs[nObjects].brightness = 1.0;
@@ -353,7 +525,7 @@ void init( void )
 
 //----------------------------------------------------------------------------
 
-void drawMesh(SceneObject sceneObj)
+void drawMesh(SceneObject sceneObj, int object_num)
 {
     // Activate a texture, loading if needed.
     loadTextureIfNotAlreadyLoaded(sceneObj.texId);
@@ -374,6 +546,16 @@ void drawMesh(SceneObject sceneObj)
     // Set the model matrix - this should combine translation, rotation and scaling based on what's
     // in the sceneObj structure (see near the top of the program).
     mat4 rotation_matrix = RotateX(sceneObj.angles[0]) * RotateY(sceneObj.angles[1]) * RotateZ(sceneObj.angles[2]);
+    //if an animated model then do walking animation
+    if (sceneObjs[object_num].meshId > 55 && !sceneObjs[object_num].animation_paused){
+        if (sceneObjs[object_num].animation_type == 0){
+            objectWalk(object_num);
+        }else if (sceneObjs[object_num].animation_type == 1){
+            objectBounce(object_num);
+        }else if (sceneObjs[object_num].animation_type == 2){
+            objectWalkDiagonal(object_num);
+        }
+    }
     mat4 model = Translate(sceneObj.loc) * rotation_matrix * Scale(sceneObj.scale);
 
     // Set the model-view matrix for the shaders
@@ -382,10 +564,6 @@ void drawMesh(SceneObject sceneObj)
     // Activate the VAO for a mesh, loading if needed.
     loadMeshIfNotAlreadyLoaded(sceneObj.meshId);
     CheckError();
-    //float poseTime = 0.0f;
-    //if (sceneObj.meshId >= 56) {
-    //    poseTime = 1.0 * glutGet(GLUT_ELAPSED_TIME);
-    //}
     glBindVertexArray( vaoIDs[sceneObj.meshId] );
     CheckError();
     
@@ -397,8 +575,8 @@ void drawMesh(SceneObject sceneObj)
     mat4 boneTransforms[nBones];     // was: mat4 boneTransforms[mesh->mNumBones];
     
     float numFrames = 40.0;
-    float POSE_TIME = fmod (sceneObj.FPS * (glutGet(GLUT_ELAPSED_TIME) - sceneObj.animStart)/1000, numFrames);
-    std::cout << POSE_TIME << std::endl;   
+    float POSE_TIME = fmod (sceneObj.FPC * (glutGet(GLUT_ELAPSED_TIME) - sceneObj.start_time)/1000, numFrames);
+    //std::cout << POSE_TIME << std::endl;   
 
     calculateAnimPose(meshes[sceneObj.meshId], scenes[sceneObj.meshId], 0,
             POSE_TIME, boneTransforms);
@@ -411,6 +589,7 @@ void drawMesh(SceneObject sceneObj)
 }
 
 //----------------------------------------------------------------------------
+
 
 void display( void )
 {
@@ -448,8 +627,8 @@ void display( void )
         glUniform1f( glGetUniformLocation(shaderProgram, "Shininess"), so.shine );
         CheckError();
 
-        drawMesh(sceneObjs[i]);
-    }
+        drawMesh(sceneObjs[i], i);
+    } 
 
     glutSwapBuffers();
 }
@@ -594,14 +773,14 @@ static void adjustAngleZTexscale(vec2 az_ts)
 
 static void deleteObject()
 {
-    if (nObjects > 2){
+    if (nObjects > 3){
         currObject--;
         nObjects--;
     }
 }
 
 static void duplicateObject(){
-    if (nObjects > 2){
+    if (nObjects > 3){
         sceneObjs[nObjects] = sceneObjs[nObjects-1];
         currObject++;
         nObjects++;
@@ -609,7 +788,7 @@ static void duplicateObject(){
 }
 
 static void selectObjectMenu(int id){
-    if (id == 0 && currObject > 2){
+    if (id == 0 && currObject > 3){
         currObject--;
     }
     if (id == 1 && currObject < nObjects-1){
@@ -622,6 +801,7 @@ static void mainmenu(int id)
     deactivateTool();
     if (id == 41 && currObject>=0) {
         toolObj=currObject;
+        sceneObjs[toolObj].animation_paused = true;
         setToolCallbacks(adjustLocXZ, camRotZ(),
                          adjustScaleY, mat2(0.05, 0, 0, 10) );
     }
@@ -636,6 +816,69 @@ static void mainmenu(int id)
     if (id == 65)
         duplicateObject();
     if (id == 99) exit(0);
+}
+
+static void animationMenu(int id){
+    //change axis
+    if (id == 0){
+        sceneObjs[currObject].walkalongx = !sceneObjs[currObject].walkalongx;
+        if (sceneObjs[currObject].walkalongx){
+            if (sceneObjs[currObject].walkback){
+                faceLeft(currObject);
+                sceneObjs[currObject].current_direction = "left";
+            }else{
+                faceRight(currObject);
+                sceneObjs[currObject].current_direction = "right";
+            }
+        }else{
+            if (sceneObjs[currObject].walkback){
+                faceForward(currObject);
+                sceneObjs[currObject].current_direction = "forward";
+            }else{
+                faceBackward(currObject);
+                sceneObjs[currObject].current_direction = "backward";
+            }
+        }
+    }
+    //change direction
+    if (id == 1){
+        sceneObjs[currObject].walkback = !sceneObjs[currObject].walkback;
+        if (sceneObjs[currObject].walkback){
+            if (sceneObjs[currObject].walkalongx){
+                faceLeft(currObject);
+                sceneObjs[currObject].current_direction = "left";
+            }else{
+                faceForward(currObject);
+                sceneObjs[currObject].current_direction = "forward";
+            }
+        }else{
+            if (sceneObjs[currObject].walkalongx){
+                faceRight(currObject);
+                sceneObjs[currObject].current_direction = "right";
+            }else{
+                faceBackward(currObject);
+                sceneObjs[currObject].current_direction = "backward";
+            }
+        }
+    }
+    //pause or resume animation
+    if (id == 2){
+        if (sceneObjs[currObject].animation_paused){
+            glutChangeToMenuEntry(5, "Pause Animation", 2);
+        }else{
+            glutChangeToMenuEntry(5, "Resume Animation", 2);
+        }
+        sceneObjs[currObject].animation_paused = !sceneObjs[currObject].animation_paused;
+    }
+    //type of animation
+    if (id>2 && id<6){
+        sceneObjs[currObject].animation_type = id-3;
+        sceneObjs[currObject].start_position = sceneObjs[currObject].loc;
+    }
+    //speed
+    if (id>=10 && id<=20) sceneObjs[currObject].speed = id-10;
+    //distance
+    if (id>=30 && id<=50) sceneObjs[currObject].move_distance = id-30;
 }
 
 static void makeMenu()
@@ -659,9 +902,37 @@ static void makeMenu()
     glutAddMenuEntry("Move Light 2",80);
     glutAddMenuEntry("R/G/B/All Light 2",81);
 
+    int speedSubMenuID = glutCreateMenu(animationMenu);
+    for (int i=0; i<11; i++){
+        std::string s = std::to_string(i);
+        char const *pchar = s.c_str(); 
+        glutAddMenuEntry(pchar,i+10);
+    }
+
+    int distancecoveredSubMenuID = glutCreateMenu(animationMenu);
+    for (int i=0; i<21; i++){
+        std::string s = std::to_string(i);
+        char const *pchar = s.c_str(); 
+        glutAddMenuEntry(pchar,i+30);
+    }
+
+    int animationtypeSubMenuID = glutCreateMenu(animationMenu);
+    glutAddMenuEntry("Walk Straight Line",3);
+    glutAddMenuEntry("Bounce",4);
+    glutAddMenuEntry("Walk Diagonal",5);
+
+    int animationMenuID = glutCreateMenu(animationMenu);
+    glutAddMenuEntry("Change axis", 0);
+    glutAddMenuEntry("Change direction", 1);
+    glutAddSubMenu("Speed", speedSubMenuID);
+    glutAddSubMenu("Distance Covered", distancecoveredSubMenuID);
+    glutAddMenuEntry("Pause Animation", 2);
+    glutAddSubMenu("Animation Type", animationtypeSubMenuID);
+
     glutCreateMenu(mainmenu);
     glutAddMenuEntry("Rotate/Move Camera",50);
     glutAddMenuEntry("Duplicate object", 65);
+    glutAddSubMenu("Animation Properties", animationMenuID);
     glutAddMenuEntry("Delete object", 60);
     glutAddSubMenu("Add object", objectId);
     glutAddSubMenu("Change object", selectObjectMenuId);
