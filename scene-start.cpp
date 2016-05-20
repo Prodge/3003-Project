@@ -67,7 +67,6 @@ typedef struct {
     int texId;
     float texScale;
     int start_time;
-    int FPC;
     int animation_type;
     float speed;
     float move_distance;
@@ -246,7 +245,6 @@ static void adjustcamSideUp(vec2 su)
 static void adjustLocXZ(vec2 xz)
 {
     sceneObjs[toolObj].loc[0]+=xz[0]; sceneObjs[toolObj].loc[2]+=xz[1];
-    std::cout << sceneObjs[currObject].loc << std::endl;   
     //restricts objects to be within ground
     if (sceneObjs[toolObj].loc[0]>=sceneObjs[0].scale){
         sceneObjs[toolObj].loc[0] = sceneObjs[0].scale;
@@ -432,17 +430,16 @@ static void addObject(int id)
     //all models after 55 is regarded as animated models
     if (id>55){
         sceneObjs[nObjects].start_time = glutGet(GLUT_ELAPSED_TIME);
-        sceneObjs[nObjects].FPC = 24.0;
         sceneObjs[nObjects].speed = 3;
         sceneObjs[nObjects].move_distance = 7;
         sceneObjs[nObjects].start_position = sceneObjs[nObjects].loc;
         sceneObjs[nObjects].walkback = false;
         sceneObjs[nObjects].walkalongx = false;
         sceneObjs[nObjects].animation_paused = false;
-        sceneObjs[nObjects].animation_type = 2;
+        sceneObjs[nObjects].reached_max = false;
+        sceneObjs[nObjects].animation_type = 0;
         sceneObjs[nObjects].actiony = "plus";
         sceneObjs[nObjects].actionx = "minus";
-        sceneObjs[nObjects].reached_max = false;
         faceBackward(nObjects);
     }
 
@@ -555,7 +552,7 @@ void drawMesh(SceneObject sceneObj, int object_num)
         }else if (sceneObjs[object_num].animation_type == 1){
             objectBounce(object_num);
         }else if (sceneObjs[object_num].animation_type == 2){
-            objectWalkDiagonal(object_num);
+            if (sceneObjs[object_num].move_distance != 0) objectWalkDiagonal(object_num);
         }
     }
     mat4 model = Translate(sceneObj.loc) * rotation_matrix * Scale(sceneObj.scale);
@@ -568,7 +565,7 @@ void drawMesh(SceneObject sceneObj, int object_num)
     CheckError();
     glBindVertexArray( vaoIDs[sceneObj.meshId] );
     CheckError();
-    
+
     int nBones = meshes[sceneObj.meshId]->mNumBones;
     if(nBones == 0)
         // If no bones, just a single identity matrix is used
@@ -576,9 +573,13 @@ void drawMesh(SceneObject sceneObj, int object_num)
 
     mat4 boneTransforms[nBones];     // was: mat4 boneTransforms[mesh->mNumBones];
     
-    float numFrames = 40.0;
-    float POSE_TIME = fmod (sceneObj.FPC * (glutGet(GLUT_ELAPSED_TIME) - sceneObj.start_time)/1000, numFrames);
-    //std::cout << POSE_TIME << std::endl;   
+    float POSE_TIME = 0.0;
+    if (sceneObjs[object_num].meshId > 55)
+        POSE_TIME = fmod (
+            getAnimTicksPerSecond(scenes[sceneObj.meshId]) * 
+            (glutGet(GLUT_ELAPSED_TIME) - sceneObj.start_time)/1000, 
+            getAnimDuration(scenes[sceneObj.meshId])
+        );
 
     calculateAnimPose(meshes[sceneObj.meshId], scenes[sceneObj.meshId], 0,
             POSE_TIME, boneTransforms);
@@ -765,8 +766,6 @@ static void adjustAngleYX(vec2 angle_yx)
 {
     sceneObjs[currObject].angles[1]+=angle_yx[0];
     sceneObjs[currObject].angles[0]-=angle_yx[1];
-    std::cout << sceneObjs[currObject].angles[0] << std::endl;   
-    std::cout << sceneObjs[currObject].angles[1] << std::endl;   
 }
 
 static void adjustAngleZTexscale(vec2 az_ts)
