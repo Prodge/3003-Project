@@ -1,4 +1,5 @@
 #version 120
+#extension GL_EXT_gpu_shader4 : enable
 
 attribute vec3 vPosition;
 attribute vec3 vNormal;

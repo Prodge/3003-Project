@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <dirent.h>
 #include <time.h>
+#include <string.h>
 
 // Open Asset Importer header files (in ../../assimp--3.0.1270/include)
 // This is a standard open source library for loading meshes, see gnatidread.h
@@ -181,7 +182,7 @@ void loadMeshIfNotAlreadyLoaded(int meshNumber)
 
     glBindBuffer( GL_ARRAY_BUFFER, buffers[0] ); CheckError();
     glBufferData( GL_ARRAY_BUFFER, sizeof(int)*4*mesh->mNumVertices, boneIDs, GL_STATIC_DRAW ); CheckError();
-    glVertexAttribIPointer(vBoneIDs, 4, GL_INT, 0, BUFFER_OFFSET(0)); CheckError(); 
+    glVertexAttribIPointer(vBoneIDs, 4, GL_INT, 0, BUFFER_OFFSET(0)); CheckError();
     glEnableVertexAttribArray(vBoneIDs);     CheckError();
 
     glBindBuffer( GL_ARRAY_BUFFER, buffers[1] );
@@ -351,7 +352,7 @@ static void objectWalkDiagonal(int i){
     if (sceneObjs[i].operation_addition[1]) sceneObjs[i].loc[2] += displacement_factor;
 
     //setting direction
-    if (!sceneObjs[i].operation_addition[0] && sceneObjs[i].operation_addition[1]) faceLeft(i,true); 
+    if (!sceneObjs[i].operation_addition[0] && sceneObjs[i].operation_addition[1]) faceLeft(i,true);
     if (!sceneObjs[i].operation_addition[0] && !sceneObjs[i].operation_addition[1]) faceForward(i,true);
     if (sceneObjs[i].operation_addition[0] && !sceneObjs[i].operation_addition[1]) faceRight(i,true);
     if (sceneObjs[i].operation_addition[0] && sceneObjs[i].operation_addition[1]) faceBackward(i,true);
@@ -433,11 +434,11 @@ static void addObject(int id)
     sceneObjs[nObjects].loc[1] = 0.0;
     sceneObjs[nObjects].loc[2] = currPos[1];
     sceneObjs[nObjects].loc[3] = 1.0;
-    
+
     if (id!=0 && id!=55)
         sceneObjs[nObjects].scale = 0.005;
-    
-    //all models after 55 is regarded as animated models and 
+
+    //all models after 55 is regarded as animated models and
     //default animation properties are set for each
     if (id>55){
         sceneObjs[nObjects].start_time = glutGet(GLUT_ELAPSED_TIME);
@@ -521,7 +522,7 @@ void init( void )
     addObject(55); // Sphere for the second light
     sceneObjs[2].loc = vec4(-2.0, 1.0, -2.0, 1.0);
     sceneObjs[2].scale = 0.2;
-    sceneObjs[2].texId = 0; 
+    sceneObjs[2].texId = 0;
     sceneObjs[2].brightness = 0.4;
 
     addObject(rand() % numMeshes); // A test mesh
@@ -583,12 +584,12 @@ void drawMesh(SceneObject sceneObj, int object_num)
         nBones = 1;
 
     mat4 boneTransforms[nBones];
-    
+
     float POSE_TIME = 0.0;
     if (sceneObjs[object_num].meshId > 55)
         POSE_TIME = fmod (
-            getAnimTicksPerSecond(scenes[sceneObj.meshId]) * 
-            (glutGet(GLUT_ELAPSED_TIME) - sceneObj.start_time)/1000, 
+            getAnimTicksPerSecond(scenes[sceneObj.meshId]) *
+            (glutGet(GLUT_ELAPSED_TIME) - sceneObj.start_time)/1000,
             getAnimDuration(scenes[sceneObj.meshId])
         );
 
@@ -625,8 +626,8 @@ void display( void )
     glUniform4fv( glGetUniformLocation(shaderProgram, "Light2Position"), 1, light2Position );
     CheckError();
     glUniform3fv( glGetUniformLocation(shaderProgram, "Light1RgbBrightness"), 1, lightObj1.rgb * lightObj1.brightness );
-    glUniform3fv( glGetUniformLocation(shaderProgram, "Light2RgbBrightness"), 1, lightObj2.rgb * lightObj2.brightness ); 
-    
+    glUniform3fv( glGetUniformLocation(shaderProgram, "Light2RgbBrightness"), 1, lightObj2.rgb * lightObj2.brightness );
+
     for (int i=0; i < nObjects; i++) {
         SceneObject so = sceneObjs[i];
 
@@ -639,7 +640,7 @@ void display( void )
         CheckError();
 
         drawMesh(sceneObjs[i], i);
-    } 
+    }
 
     glutSwapBuffers();
 }
@@ -792,9 +793,10 @@ static void deleteObject()
 
 static void duplicateObject(){
     if (nObjects > 3){
-        sceneObjs[nObjects] = sceneObjs[nObjects-1];
-        currObject++;
+        sceneObjs[nObjects] = sceneObjs[currObject];
+        currObject = nObjects;
         nObjects++;
+        toolObj=currObject;
     }
 }
 
@@ -805,6 +807,7 @@ static void selectObjectMenu(int id){
     if (id == 1 && currObject < nObjects-1){
         currObject++;
     }
+    toolObj=currObject;
 }
 
 static void mainmenu(int id)
