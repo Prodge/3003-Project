@@ -52,9 +52,6 @@ texture* textures[numTextures]; // An array of texture pointers - see gnatidread
 GLuint textureIDs[numTextures]; // Stores the IDs returned by glGenTextures
 
 //------Scene Objects---------------------------------------------------------
-//
-// For each object in a scene we store the following
-// Note: the following is exactly what the sample solution uses, you can do things differently if you want.
 typedef struct {
     vec4 loc;
     float scale;
@@ -70,12 +67,11 @@ typedef struct {
     int animation_type;
     float speed;
     float move_distance;
-    bool walkback;
-    bool walkalongx;
+    bool walk_back;
+    bool walk_along_x;
     bool animation_paused;
     bool reached_max;
-    string actionx;
-    string actiony;
+    bool operation_addition[2];
     vec4 start_position;
 } SceneObject;
 
@@ -317,14 +313,14 @@ static void faceForward(int object_num, bool diagonal=false){
 
 static void setDirection(int num){
     SceneObject so = sceneObjs[num];
-    if (so.walkback){
-        if (so.walkalongx){
+    if (so.walk_back){
+        if (so.walk_along_x){
             faceLeft(num);
         }else{
             faceForward(num);
         }
     }else{
-        if (so.walkalongx){
+        if (so.walk_along_x){
             faceRight(num);
         }else{
             faceBackward(num);
@@ -336,49 +332,62 @@ static void objectWalkDiagonal(int i){
     SceneObject so = sceneObjs[i];
 
     float displacement_factor = so.speed * 0.0165;
-    float limits[4] = {so.start_position[0]-so.move_distance, so.start_position[0], so.start_position[2]-(so.move_distance/2), so.start_position[2]+(so.move_distance/2)};
 
-    if (so.loc[0] <= limits[0]) sceneObjs[i].actionx = "plus";
-    if (so.loc[0] >= limits[1]) sceneObjs[i].actionx = "minus";
-    if (so.loc[2] <= limits[2]) sceneObjs[i].actiony = "plus";
-    if (so.loc[2] >= limits[3]) sceneObjs[i].actiony = "minus";
+    //setting diagonal limits
+    float limits[4] = {so.start_position[0]-so.move_distance, so.start_position[0],
+                       so.start_position[2]-(so.move_distance/2), so.start_position[2]+(so.move_distance/2)
+    };
 
-    if (sceneObjs[i].actionx=="minus") sceneObjs[i].loc[0] -= displacement_factor;
-    if (sceneObjs[i].actiony=="minus") sceneObjs[i].loc[2] -= displacement_factor;
-    if (sceneObjs[i].actionx=="plus") sceneObjs[i].loc[0] += displacement_factor;
-    if (sceneObjs[i].actiony=="plus") sceneObjs[i].loc[2] += displacement_factor;
+    //checking limits
+    if (so.loc[0] <= limits[0]) sceneObjs[i].operation_addition[0] = true;
+    if (so.loc[0] >= limits[1]) sceneObjs[i].operation_addition[0] = false;
+    if (so.loc[2] <= limits[2]) sceneObjs[i].operation_addition[1] = true;
+    if (so.loc[2] >= limits[3]) sceneObjs[i].operation_addition[1] = false;
 
-    if (sceneObjs[i].actionx=="minus" && sceneObjs[i].actiony=="plus") faceLeft(i,true); 
-    if (sceneObjs[i].actionx=="minus" && sceneObjs[i].actiony=="minus") faceForward(i,true);
-    if (sceneObjs[i].actionx=="plus" && sceneObjs[i].actiony=="minus") faceRight(i,true);
-    if (sceneObjs[i].actionx=="plus" && sceneObjs[i].actiony=="plus") faceBackward(i,true);
+    //doing appropiate operation
+    if (!sceneObjs[i].operation_addition[0]) sceneObjs[i].loc[0] -= displacement_factor;
+    if (!sceneObjs[i].operation_addition[1]) sceneObjs[i].loc[2] -= displacement_factor;
+    if (sceneObjs[i].operation_addition[0]) sceneObjs[i].loc[0] += displacement_factor;
+    if (sceneObjs[i].operation_addition[1]) sceneObjs[i].loc[2] += displacement_factor;
+
+    //setting direction
+    if (!sceneObjs[i].operation_addition[0] && sceneObjs[i].operation_addition[1]) faceLeft(i,true); 
+    if (!sceneObjs[i].operation_addition[0] && !sceneObjs[i].operation_addition[1]) faceForward(i,true);
+    if (sceneObjs[i].operation_addition[0] && !sceneObjs[i].operation_addition[1]) faceRight(i,true);
+    if (sceneObjs[i].operation_addition[0] && sceneObjs[i].operation_addition[1]) faceBackward(i,true);
 }
 
 static void objectBounce(int i){
     SceneObject so = sceneObjs[i];
 
+    //setting jumping factor
     float vertical_displacement_factor = so.speed * 0.0165;
     if (so.reached_max) vertical_displacement_factor *= -1;
 
+    //setting walking factor
     float horizontal_displacement_factor = 1 * 0.0165;
-    if (so.walkback) horizontal_displacement_factor *= -1;
+    if (so.walk_back) horizontal_displacement_factor *= -1;
 
+    //setting axis
     int vec_pos = 2;
-    if (so.walkalongx) vec_pos = 0;
+    if (so.walk_along_x) vec_pos = 0;
 
     sceneObjs[i].loc[1] += vertical_displacement_factor;
     sceneObjs[i].loc[vec_pos] += horizontal_displacement_factor;
 
+    //checking max move distance is reached
     if (sceneObjs[i].loc[1] >= so.move_distance){
         sceneObjs[i].reached_max = true;
     }else if(sceneObjs[i].loc[1] <= 0.0){
         sceneObjs[i].reached_max = false;
     }
+
+    //checking end of ground is reached
     if (sceneObjs[i].loc[vec_pos] >= sceneObjs[0].scale){
-        sceneObjs[i].walkback = true;
+        sceneObjs[i].walk_back = true;
         setDirection(i);
     }else if(sceneObjs[i].loc[vec_pos] <= (-sceneObjs[0].scale)){
-        sceneObjs[i].walkback = false;
+        sceneObjs[i].walk_back = false;
         setDirection(i);
     }
 }
@@ -386,29 +395,30 @@ static void objectBounce(int i){
 static void objectWalk(int i){
     SceneObject so = sceneObjs[i];
 
-    //setting direction and object face
+    //setting displacement factor
     float vertical_displacement_factor = so.speed * 0.0165;
-    if (so.walkback) vertical_displacement_factor *= -1;
+    if (so.walk_back) vertical_displacement_factor *= -1;
 
+    //setting axis
     int vec_pos = 2;
-    if (so.walkalongx) vec_pos = 0;
+    if (so.walk_along_x) vec_pos = 0;
 
     sceneObjs[i].loc[vec_pos] += vertical_displacement_factor;
 
     //checking object restrictions
     if (so.loc[vec_pos] >= (so.start_position[vec_pos]+so.move_distance)){
-        sceneObjs[i].walkback = true;
+        sceneObjs[i].walk_back = true;
         setDirection(i);
     }else if (so.loc[vec_pos] >= sceneObjs[0].scale){
         sceneObjs[i].start_position[vec_pos] = sceneObjs[0].scale - so.move_distance;
-        sceneObjs[i].walkback = true;
+        sceneObjs[i].walk_back = true;
         setDirection(i);
     }else if (so.loc[vec_pos] <= so.start_position[vec_pos]){
-        sceneObjs[i].walkback = false;
+        sceneObjs[i].walk_back = false;
         setDirection(i);
     }else if (so.loc[vec_pos] <= (-sceneObjs[0].scale)){
         sceneObjs[i].start_position[vec_pos] = (-sceneObjs[0].scale) + so.move_distance;
-        sceneObjs[i].walkback = false;
+        sceneObjs[i].walk_back = false;
         setDirection(i);
     }
 }
@@ -427,19 +437,20 @@ static void addObject(int id)
     if (id!=0 && id!=55)
         sceneObjs[nObjects].scale = 0.005;
     
-    //all models after 55 is regarded as animated models
+    //all models after 55 is regarded as animated models and 
+    //default animation properties are set for each
     if (id>55){
         sceneObjs[nObjects].start_time = glutGet(GLUT_ELAPSED_TIME);
         sceneObjs[nObjects].speed = 3;
-        sceneObjs[nObjects].move_distance = 7;
+        sceneObjs[nObjects].move_distance = 5;
         sceneObjs[nObjects].start_position = sceneObjs[nObjects].loc;
-        sceneObjs[nObjects].walkback = false;
-        sceneObjs[nObjects].walkalongx = false;
+        sceneObjs[nObjects].animation_type = 0;
+        sceneObjs[nObjects].walk_back = false;
+        sceneObjs[nObjects].walk_along_x = false;
         sceneObjs[nObjects].animation_paused = false;
         sceneObjs[nObjects].reached_max = false;
-        sceneObjs[nObjects].animation_type = 0;
-        sceneObjs[nObjects].actiony = "plus";
-        sceneObjs[nObjects].actionx = "minus";
+        sceneObjs[nObjects].operation_addition[0] = false;
+        sceneObjs[nObjects].operation_addition[1] = true;
         faceBackward(nObjects);
     }
 
@@ -494,7 +505,7 @@ void init( void )
     modelViewU = glGetUniformLocation(shaderProgram, "ModelView");
     uBoneTransforms = glGetUniformLocation( shaderProgram, "boneTransforms" );
 
-    // Objects 0, and 1 are the ground and the first light.
+    // Objects 0, 1 and 2 are the ground, first and second light.
     addObject(0); // Square for the ground
     sceneObjs[0].loc = vec4(0.0, 0.0, 0.0, 1.0);
     sceneObjs[0].scale = 10.0;
@@ -507,11 +518,11 @@ void init( void )
     sceneObjs[1].texId = 0; // Plain texture
     sceneObjs[1].brightness = 0.2; // The light's brightness is 5 times this (below).
 
-    addObject(55); // Sphere for the first light
+    addObject(55); // Sphere for the second light
     sceneObjs[2].loc = vec4(-2.0, 1.0, -2.0, 1.0);
     sceneObjs[2].scale = 0.2;
-    sceneObjs[2].texId = 0; // Plain texture
-    sceneObjs[2].brightness = 0.4; // The light's brightness is 5 times this (below).
+    sceneObjs[2].texId = 0; 
+    sceneObjs[2].brightness = 0.4;
 
     addObject(rand() % numMeshes); // A test mesh
 
@@ -542,10 +553,9 @@ void drawMesh(SceneObject sceneObj, int object_num)
     // Set the projection matrix for the shaders
     glUniformMatrix4fv( projectionU, 1, GL_TRUE, projection );
 
-    // Set the model matrix - this should combine translation, rotation and scaling based on what's
-    // in the sceneObj structure (see near the top of the program).
     mat4 rotation_matrix = RotateX(sceneObj.angles[0]) * RotateY(sceneObj.angles[1]) * RotateZ(sceneObj.angles[2]);
-    //if an animated model then do walking animation
+
+    //if an animated model and animation is not paused then do animation
     if (sceneObjs[object_num].meshId > 55 && !sceneObjs[object_num].animation_paused){
         if (sceneObjs[object_num].animation_type == 0){
             objectWalk(object_num);
@@ -555,6 +565,7 @@ void drawMesh(SceneObject sceneObj, int object_num)
             if (sceneObjs[object_num].move_distance != 0) objectWalkDiagonal(object_num);
         }
     }
+
     mat4 model = Translate(sceneObj.loc) * rotation_matrix * Scale(sceneObj.scale);
 
     // Set the model-view matrix for the shaders
@@ -571,7 +582,7 @@ void drawMesh(SceneObject sceneObj, int object_num)
         // If no bones, just a single identity matrix is used
         nBones = 1;
 
-    mat4 boneTransforms[nBones];     // was: mat4 boneTransforms[mesh->mNumBones];
+    mat4 boneTransforms[nBones];
     
     float POSE_TIME = 0.0;
     if (sceneObjs[object_num].meshId > 55)
@@ -601,9 +612,6 @@ void display( void )
     glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
     CheckError(); // May report a harmless GL_INVALID_OPERATION with GLEW on the first frame
 
-    // Set the view matrix. To start with this just moves the camera
-    // backwards.  You'll need to add appropriate rotations.
-
     mat4 rotation_matrix = RotateX(camRotUpAndOverDeg) * RotateY(camRotSidewaysDeg);
     view = Translate(0.0, 0.0, -viewDist) * rotation_matrix;
 
@@ -612,13 +620,13 @@ void display( void )
     SceneObject lightObj2 = sceneObjs[2];
     vec4 light2Position = rotation_matrix * lightObj2.loc ;
 
-    glUniform4fv( glGetUniformLocation(shaderProgram, "Light1Position"), 1, light1Position);
+    glUniform4fv( glGetUniformLocation(shaderProgram, "Light1Position"), 1, light1Position );
     CheckError();
-    glUniform4fv( glGetUniformLocation(shaderProgram, "Light2Position"), 1, light2Position);
+    glUniform4fv( glGetUniformLocation(shaderProgram, "Light2Position"), 1, light2Position );
     CheckError();
     glUniform3fv( glGetUniformLocation(shaderProgram, "Light1RgbBrightness"), 1, lightObj1.rgb * lightObj1.brightness );
     glUniform3fv( glGetUniformLocation(shaderProgram, "Light2RgbBrightness"), 1, lightObj2.rgb * lightObj2.brightness ); 
-
+    
     for (int i=0; i < nObjects; i++) {
         SceneObject so = sceneObjs[i];
 
@@ -824,15 +832,15 @@ static void mainmenu(int id)
 static void animationMenu(int id){
     //change axis
     if (id == 0){
-        sceneObjs[currObject].walkalongx = !sceneObjs[currObject].walkalongx;
-        if (sceneObjs[currObject].walkalongx){
-            if (sceneObjs[currObject].walkback){
+        sceneObjs[currObject].walk_along_x = !sceneObjs[currObject].walk_along_x;
+        if (sceneObjs[currObject].walk_along_x){
+            if (sceneObjs[currObject].walk_back){
                 faceLeft(currObject);
             }else{
                 faceRight(currObject);
             }
         }else{
-            if (sceneObjs[currObject].walkback){
+            if (sceneObjs[currObject].walk_back){
                 faceForward(currObject);
             }else{
                 faceBackward(currObject);
@@ -841,7 +849,7 @@ static void animationMenu(int id){
     }
     //change direction
     if (id == 1){
-        sceneObjs[currObject].walkback = !sceneObjs[currObject].walkback;
+        sceneObjs[currObject].walk_back = !sceneObjs[currObject].walk_back;
         setDirection(currObject);
     }
     //pause or resume animation
@@ -888,15 +896,13 @@ static void makeMenu()
     int speedSubMenuID = glutCreateMenu(animationMenu);
     for (int i=0; i<11; i++){
         std::string s = std::to_string(i);
-        char const *pchar = s.c_str(); 
-        glutAddMenuEntry(pchar,i+10);
+        glutAddMenuEntry(s.c_str(),i+10);
     }
 
     int distancecoveredSubMenuID = glutCreateMenu(animationMenu);
     for (int i=0; i<21; i++){
         std::string s = std::to_string(i);
-        char const *pchar = s.c_str(); 
-        glutAddMenuEntry(pchar,i+30);
+        glutAddMenuEntry(s.c_str(),i+30);
     }
 
     int animationtypeSubMenuID = glutCreateMenu(animationMenu);
@@ -955,14 +961,6 @@ void reshape( int width, int height )
     windowHeight = height;
 
     glViewport(0, 0, width, height);
-
-    // You'll need to modify this so that the view is similar to that in the
-    // sample solution.
-    // In particular:
-    //     - the view should include "closer" visible objects (slightly tricky)
-    //     - when the width is less than the height, the view should adjust so
-    //         that the same part of the scene is visible across the width of
-    //         the window.
 
     //Part D - nearDist scaled by 7.5, projection 100 by 7.5
     GLfloat nearDist = 0.2/7.5;

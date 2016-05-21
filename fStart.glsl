@@ -27,10 +27,10 @@ void main()
 
     // Unit direction vectors for Blinn-Phong shading calculation
     vec3 L1 = normalize( L1vec );   // Direction to the light source
-    vec3 L2 = normalize( L2vec );   // Direction to the light source
+    vec3 L2 = normalize( L2vec );
     vec3 E = normalize( -pos );   // Direction to the eye/camera
     vec3 H1 = normalize( L1 + E );  // Halfway vector
-    vec3 H2 = normalize( L2 + E );  // Halfway vector
+    vec3 H2 = normalize( L2 + E );
 
     // Transform vertex normal into eye coordinates (assumes scaling
     // is uniform across dimensions)
@@ -66,7 +66,6 @@ void main()
     float averageDistanceToLight = abs(L1vec.x) + abs(L1vec.y) + abs(L1vec.z) + minDistance;
     float maxLightDistanceMultiplier = 0.8;
     float lightDistanceMultiplier = maxLightDistanceMultiplier/(averageDistanceToLight/falloff);
-
 
     color.rgb = ((ambient1 + diffuse1) * lightDistanceMultiplier) + globalAmbient + ambient2 + diffuse2;
     color.a = 1.0;
