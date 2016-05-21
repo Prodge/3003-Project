@@ -4,7 +4,6 @@
 #include <stdlib.h>
 #include <dirent.h>
 #include <time.h>
-#include <string.h>
 
 // Open Asset Importer header files (in ../../assimp--3.0.1270/include)
 // This is a standard open source library for loading meshes, see gnatidread.h
