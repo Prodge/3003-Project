@@ -24,10 +24,10 @@ void main()
 
     // Unit direction vectors for Blinn-Phong shading calculation
     vec3 L1 = normalize( L1vec );   // Direction to the light source
-    vec3 L2 = normalize( L2vec );   // Direction to the light source
+    vec3 L2 = normalize( L2vec );
     vec3 E = normalize( -pos );   // Direction to the eye/camera
     vec3 H1 = normalize( L1 + E );  // Halfway vector
-    vec3 H2 = normalize( L2 + E );  // Halfway vector
+    vec3 H2 = normalize( L2 + E );
 
     // Transform vertex normal into eye coordinates (assumes scaling
     // is uniform across dimensions)

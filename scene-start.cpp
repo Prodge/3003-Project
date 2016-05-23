@@ -295,7 +295,7 @@ void init( void )
     projectionU = glGetUniformLocation(shaderProgram, "Projection");
     modelViewU = glGetUniformLocation(shaderProgram, "ModelView");
 
-    // Objects 0, and 1 are the ground and the first light.
+    // Objects 0, and 1 are the ground, first and second light.
     addObject(0); // Square for the ground
     sceneObjs[0].loc = vec4(0.0, 0.0, 0.0, 1.0);
     sceneObjs[0].scale = 10.0;
@@ -311,8 +311,8 @@ void init( void )
     addObject(55); // Sphere for the first light
     sceneObjs[2].loc = vec4(-2.0, 1.0, -2.0, 1.0);
     sceneObjs[2].scale = 0.2;
-    sceneObjs[2].texId = 0; // Plain texture
-    sceneObjs[2].brightness = 0.4; // The light's brightness is 5 times this (below).
+    sceneObjs[2].texId = 0;
+    sceneObjs[2].brightness = 0.4;
 
     addObject(rand() % numMeshes); // A test mesh
 
@@ -344,8 +344,6 @@ void drawMesh(SceneObject sceneObj)
     // Set the projection matrix for the shaders
     glUniformMatrix4fv( projectionU, 1, GL_TRUE, projection );
 
-    // Set the model matrix - this should combine translation, rotation and scaling based on what's
-    // in the sceneObj structure (see near the top of the program).
     mat4 rotation_matrix = RotateX(sceneObj.angles[0]) * RotateY(sceneObj.angles[1]) * RotateZ(sceneObj.angles[2]);
     mat4 model = Translate(sceneObj.loc) * rotation_matrix * Scale(sceneObj.scale);
 
@@ -388,7 +386,7 @@ void display( void )
     glUniform4fv( glGetUniformLocation(shaderProgram, "Light2Position"), 1, light2Position);
     CheckError();
     glUniform3fv( glGetUniformLocation(shaderProgram, "Light1RgbBrightness"), 1, lightObj1.rgb * lightObj1.brightness );
-    glUniform3fv( glGetUniformLocation(shaderProgram, "Light2RgbBrightness"), 1, lightObj2.rgb * lightObj2.brightness ); 
+    glUniform3fv( glGetUniformLocation(shaderProgram, "Light2RgbBrightness"), 1, lightObj2.rgb * lightObj2.brightness );
 
     for (int i=0; i < nObjects; i++) {
         SceneObject so = sceneObjs[i];
@@ -654,14 +652,6 @@ void reshape( int width, int height )
     windowHeight = height;
 
     glViewport(0, 0, width, height);
-
-    // You'll need to modify this so that the view is similar to that in the
-    // sample solution.
-    // In particular:
-    //     - the view should include "closer" visible objects (slightly tricky)
-    //     - when the width is less than the height, the view should adjust so
-    //         that the same part of the scene is visible across the width of
-    //         the window.
 
     //Part D - nearDist scaled by 7.5, projection 100 by 7.5
     GLfloat nearDist = 0.2/7.5;
