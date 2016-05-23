@@ -553,9 +553,10 @@ static void deleteObject()
 
 static void duplicateObject(){
     if (nObjects > 2){
-        sceneObjs[nObjects] = sceneObjs[nObjects-1];
-        currObject++;
+        sceneObjs[nObjects] = sceneObjs[currObject];
+        currObject = nObjects;
         nObjects++;
+        toolObj=currObject;
     }
 }
 
@@ -566,6 +567,7 @@ static void selectObjectMenu(int id){
     if (id == 1 && currObject < nObjects-1){
         currObject++;
     }
+    toolObj=currObject;
 }
 
 static void mainmenu(int id)
