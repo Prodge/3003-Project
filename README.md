@@ -19,9 +19,3 @@
 * [x] Part C  
 * [x] Part D
 * [x] Additional Functionalities
-
-##Group Status
-Task         | Tim  | Wimo 
------------- | ---- | ----
-Part 1 Report | Complete | Inprogess
-Part 2 Report | Inprogress | Inprogress  
